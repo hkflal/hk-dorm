@@ -1,0 +1,33 @@
+import type { Metadata } from 'next'
+import './globals.css'
+
+export const metadata: Metadata = {
+  title: '外勞宿舍 - 專業外勞宿舍管理',
+  description: '為雇主提供一條龍宿舍管理服務',
+  keywords: '香港, 勞工宿舍, 宿舍, 住宿, 租房',
+  authors: [{ name: '港舍' }],
+  openGraph: {
+    title: '外勞宿舍 - 雇主話可靠的香港勞工宿舍',
+    description: '全港性價比最高的勞工宿舍',
+    type: 'website',
+    locale: 'zh_HK',
+  },
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html>
+      <head>
+        <link 
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" 
+          rel="stylesheet" 
+        />
+      </head>
+      <body className="font-sans">{children}</body>
+    </html>
+  )
+}

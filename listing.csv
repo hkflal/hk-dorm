@@ -1,0 +1,9 @@
+﻿type,title,address,district,price,unit,status,available_at,occupation ,property_id,amenities ,room type,description,subtitle,image_url,vr
+勞工舍宿,西洋菜南街,旺角西洋菜南街166號,旺角,3500,床位,active,now,90%,dorm-001,"[wifi,kitchen,aircon,laundry,nearMTR]",shared room,,,,"<iframe width=""853"" height=""480"" src=""https://my.matterportvr.cn/show/?m=78zzyKraxXS"" frameborder=""0"" allowfullscreen allow=""autoplay; fullscreen; web-share; xr-spatial-tracking;""></iframe>"
+勞工舍宿,通菜街,旺角通菜街72-82號,旺角,3500,床位,active,now,95%,dorm-002,"[wifi,kitchen,aircon,laundry,nearMTR]",shared room,,,,"<iframe width=""853"" height=""480"" src=""https://my.matterportvr.cn/show/?m=5CXsRkdiTas"" frameborder=""0"" allowfullscreen allow=""autoplay; fullscreen; web-share; xr-spatial-tracking;""></iframe>"
+勞工舍宿,有利大廈,彌敦道186號 有利大廈,佐敦,3500,床位,active,now,85%,dorm-003,"[wifi,kitchen,aircon,laundry,nearMTR]",shared room,,,,
+學生宿舍,永利大廈,九龍尖沙咀金巴利道 永利大廈,尖沙咀,7000,套房,active,now,30%,student-001,"[wifi,kitchen,aircon,laundry,nearMTR]",private room,,,,
+勞工舍宿,渣菲大廈,港島銅鑼灣謝斐道518-520號,銅鑼灣,3500,床位,active,now,65%,dorm-004,"[wifi,kitchen,aircon,laundry,nearMTR]",shared room,,,,
+勞工舍宿,榮華大樓,旺角西洋菜南街14-24號榮華大樓,旺角,3500,床位,active,now,100%,dorm-005,"[wifi,kitchen,aircon,laundry,nearMTR]",shared room,,,,"<iframe width=""853"" height=""480"" src=""https://my.matterportvr.cn/show/?m=EFTvN3XExpz"" frameborder=""0"" allowfullscreen allow=""autoplay; fullscreen; web-share; xr-spatial-tracking;""></iframe>"
+勞工舍宿,青山道,青山道148/150 號,長沙灣,2500,床位,pending,1/12/2025,0%,dorm-006,"[wifi,kitchen,aircon,laundry]",shared room,,,,
+勞工舍宿,金輪大廈,旺角彌敦道737-741C號,旺角,3300,床位,active,now,100%,dorm-007,"[wifi,kitchen,aircon,laundry]",shared room,,,,"<iframe width=""853"" height=""480"" src=""https://my.matterportvr.cn/show/?m=aufE3Zz16p1"" frameborder=""0"" allowfullscreen allow=""autoplay; fullscreen; web-share; xr-spatial-tracking;""></iframe>"

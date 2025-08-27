@@ -1,0 +1,81 @@
+{
+  "navigation": {
+    "home": "Home",
+    "stays": "Stays",
+    "experiences": "Experiences",
+    "services": "Services",
+    "login": "Login",
+    "signup": "Sign up",
+    "profile": "Profile",
+    "bookings": "My Bookings",
+    "favorites": "Favorites"
+  },
+  "search": {
+    "placeholder": "Where are you going?",
+    "checkin": "Check-in",
+    "checkout": "Check-out",
+    "guests": "Guests",
+    "search": "Search",
+    "addGuests": "Add guests"
+  },
+  "home": {
+    "title": "Find your perfect dorm in Hong Kong",
+    "subtitle": "Discover comfortable and affordable student accommodations",
+    "popularStays": "Popular Stays",
+    "nextMonthAvailable": "Available next month in Hong Kong"
+  },
+  "property": {
+    "perNight": "per night",
+    "guests": "guests",
+    "bedrooms": "bedrooms",
+    "bathrooms": "bathrooms",
+    "showAllPhotos": "Show all photos",
+    "addToFavorites": "Add to favorites",
+    "book": "Book",
+    "reserve": "Reserve",
+    "totalPrice": "Total price",
+    "rating": "rating",
+    "reviews": "reviews",
+    "superhost": "Superhost",
+    "nearMTR": "Near MTR",
+    "selfCheckin": "Self check-in",
+    "wifi": "WiFi",
+    "kitchen": "Kitchen",
+    "laundry": "Laundry",
+    "aircon": "Air conditioning",
+    "description": "Description",
+    "amenities": "Amenities",
+    "location": "Location",
+    "houseRules": "House rules"
+  },
+  "footer": {
+    "company": "外勞宿舍 Labour Dorm Hub",
+    "about": "About us",
+    "careers": "Careers",
+    "press": "Press",
+    "policies": "Policies",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "sitemap": "Sitemap",
+    "support": "Support",
+    "help": "Help Center",
+    "contact": "Contact us",
+    "safety": "Safety",
+    "trust": "Trust & Safety"
+  },
+  "auth": {
+    "login": "Login",
+    "signup": "Sign up",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "phone": "Phone Number",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginWithGoogle": "Continue with Google",
+    "loginWithFacebook": "Continue with Facebook"
+  }
+}

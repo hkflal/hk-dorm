@@ -1,0 +1,81 @@
+{
+  "navigation": {
+    "home": "首頁",
+    "stays": "住宿",
+    "experiences": "體驗",
+    "services": "服務",
+    "login": "登入",
+    "signup": "註冊",
+    "profile": "個人檔案",
+    "bookings": "我的預訂",
+    "favorites": "收藏"
+  },
+  "search": {
+    "placeholder": "搜尋目的地",
+    "checkin": "入住",
+    "checkout": "退房",
+    "guests": "人數",
+    "search": "搜尋",
+    "addGuests": "新增人數"
+  },
+  "home": {
+    "title": "在香港尋找完美的宿舍",
+    "subtitle": "發現舒適且實惠的學生宿舍",
+    "popularStays": "熱門住宿",
+    "nextMonthAvailable": "下個月在香港可供預訂的住宿"
+  },
+  "property": {
+    "perNight": "每晚",
+    "guests": "位客人",
+    "bedrooms": "間睡房",
+    "bathrooms": "間浴室",
+    "showAllPhotos": "顯示全部相片",
+    "addToFavorites": "加入收藏",
+    "book": "預訂",
+    "reserve": "立即預訂",
+    "totalPrice": "總價",
+    "rating": "評分",
+    "reviews": "則評價",
+    "superhost": "超讚房東",
+    "nearMTR": "鄰近地鐵站",
+    "selfCheckin": "自助入住",
+    "wifi": "WiFi",
+    "kitchen": "廚房",
+    "laundry": "洗衣設備",
+    "aircon": "冷氣",
+    "description": "房源描述",
+    "amenities": "設施服務",
+    "location": "位置",
+    "houseRules": "房屋守則"
+  },
+  "footer": {
+    "company": "外勞宿舍 Labour Dorm Hub",
+    "about": "關於我們",
+    "careers": "招聘",
+    "press": "新聞",
+    "policies": "政策",
+    "terms": "條款",
+    "privacy": "私隱",
+    "sitemap": "網站地圖",
+    "support": "支援",
+    "help": "幫助中心",
+    "contact": "聯絡我們",
+    "safety": "安全",
+    "trust": "信任與安全"
+  },
+  "auth": {
+    "login": "登入",
+    "signup": "註冊",
+    "email": "電郵",
+    "password": "密碼",
+    "confirmPassword": "確認密碼",
+    "firstName": "名字",
+    "lastName": "姓氏",
+    "phone": "電話號碼",
+    "forgotPassword": "忘記密碼？",
+    "noAccount": "還沒有帳戶？",
+    "hasAccount": "已經有帳戶？",
+    "loginWithGoogle": "使用 Google 繼續",
+    "loginWithFacebook": "使用 Facebook 繼續"
+  }
+}
