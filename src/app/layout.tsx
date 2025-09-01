@@ -1,9 +1,15 @@
-// This root layout is intentionally minimal since we're using
-// internationalized routing with [locale] segments
+// This root layout provides the basic HTML structure
+// Actual content is handled in [locale]/layout.tsx
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return children
+  return (
+    <html>
+      <body>
+        {children}
+      </body>
+    </html>
+  )
 }

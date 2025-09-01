@@ -1,154 +1,76 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Card, CardContent } from '@/components/ui/Card'
 
-export default function LoginPage({
-  params
-}: {
-  params: Promise<{ locale: string }>
-}) {
+export default function LoginPage() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const router = useRouter()
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  })
-  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
     
-    // TODO: Implement actual authentication
-    setTimeout(() => {
-      setIsLoading(false)
-      router.push('/profile')
-    }, 1500)
-  }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }))
+    // Hardcoded authentication logic
+    const isValidEmail = email.endsWith('@hkflal.com')
+    const isValidPassword = password === 'Hkflal123'
+    
+    if (isValidEmail && isValidPassword) {
+      // Store auth status in localStorage
+      localStorage.setItem('isAuthenticated', 'true')
+      localStorage.setItem('userEmail', email)
+      router.push('/admin')
+    } else {
+      alert('Invalid credentials. Please use an @hkflal.com email and correct password.')
+    }
   }
 
   return (
-      
-      <main className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-              登入您的帳戶
-            </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
-              或者{' '}
-              <Link href="/auth/register" className="font-medium text-blue-600 hover:text-blue-500">
-                建立新帳戶
-              </Link>
-            </p>
-          </div>
-          
-          <Card>
-            <CardContent className="p-8">
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    電子郵件
-                  </label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="輸入您的電子郵件"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                    密碼
-                  </label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder="輸入您的密碼"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <input
-                      id="remember-me"
-                      name="remember-me"
-                      type="checkbox"
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                      記住我
-                    </label>
-                  </div>
-
-                  <div className="text-sm">
-                    <Link href="/auth/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
-                      忘記密碼？
-                    </Link>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    disabled={isLoading}
-                    className="w-full"
-                  >
-                    {isLoading ? '登入中...' : '登入'}
-                  </Button>
-                  
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-gray-300" />
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                      <span className="px-2 bg-white text-gray-500">或</span>
-                    </div>
-                  </div>
-                  
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                  >
-                    使用 Google 登入
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-          
-          <div className="text-center text-sm text-gray-600">
-            <p>
-              還沒有帳戶？{' '}
-              <Link href="/auth/register" className="font-medium text-blue-600 hover:text-blue-500">
-                立即註冊
-              </Link>
-            </p>
-          </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Admin Login
+          </h2>
         </div>
-      </main>
-      
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Sign in
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   )
 }

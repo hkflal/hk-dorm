@@ -1,26 +1,21 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, Eye, Upload, RefreshCw, Lock } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Plus, Edit, Trash2, Eye, Upload, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { PropertyForm } from '@/components/admin/PropertyForm'
 import { Property } from '@/lib/types'
-import { 
-  getProperties, 
-  createProperty, 
-  updateProperty, 
-  deleteProperty,
-  getPropertyStats 
-} from '@/lib/supabase-services'
 
 export default function AdminPage({
   params
 }: {
   params: Promise<{ locale: string }>
 }) {
+  const router = useRouter()
   const [properties, setProperties] = useState<Property[]>([])
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingProperty, setEditingProperty] = useState<Property | null>(null)
@@ -34,38 +29,82 @@ export default function AdminPage({
   })
   const [error, setError] = useState<string | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [passwordInput, setPasswordInput] = useState('')
-  const [passwordError, setPasswordError] = useState('')
+  const [userEmail, setUserEmail] = useState('')
 
-  const ADMIN_PASSWORD = 'hkdorm123'
-
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (passwordInput === ADMIN_PASSWORD) {
+  useEffect(() => {
+    // Check authentication status from localStorage
+    const authStatus = localStorage.getItem('isAuthenticated')
+    const email = localStorage.getItem('userEmail')
+    
+    if (authStatus === 'true' && email) {
       setIsAuthenticated(true)
-      setPasswordError('')
+      setUserEmail(email)
       loadProperties()
       loadStats()
     } else {
-      setPasswordError('密碼錯誤，請重試')
-      setPasswordInput('')
+      router.push('/auth/login')
     }
-  }
-
-  // Only load data after authentication
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadProperties()
-      loadStats()
-    }
-  }, [isAuthenticated])
+    setLoading(false)
+  }, [router])
 
   const loadProperties = async () => {
     try {
       setLoading(true)
       setError(null)
-      const propertiesData = await getProperties()
-      setProperties(propertiesData)
+      // Mock data for now - replace with actual data loading
+      const mockProperties: Property[] = [
+        {
+          id: '1',
+          property_id: 'dorm-001',
+          type: '勞工舍宿',
+          title: '西洋菜南街',
+          subtitle: '在旺角的勞工舍宿',
+          description: 'Modern worker dormitory in the heart of Mong Kok',
+          address: '旺角西洋菜南街166號',
+          district: 'Mong Kok',
+          price: 3500,
+          currency: 'HKD',
+          unit: '床位',
+          status: 'active',
+          available_at: 'now',
+          occupation: '85%',
+          images: ['https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=400&h=300&fit=crop'],
+          rating: 4.2,
+          reviewCount: 15,
+          location: {
+            district: 'Mong Kok',
+            address: '旺角西洋菜南街166號',
+            nearbyMTR: ['Mong Kok', 'Prince Edward'],
+            coordinates: { lat: 22.3193, lng: 114.1694 }
+          },
+          details: {
+            guests: 1,
+            bedrooms: 0,
+            bathrooms: 1,
+            propertyType: '勞工舍宿',
+            roomType: 'shared room'
+          },
+          amenities: ['wifi', 'aircon', 'nearMTR', 'laundry'],
+          host: {
+            id: 'host-1',
+            name: 'HKFLAL Admin',
+            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+            isSuperhost: true,
+            responseTime: '1 hour'
+          },
+          availability: {
+            available: true,
+            minStay: 30,
+            maxStay: 365
+          },
+          policies: {
+            checkIn: '2:00 PM',
+            checkOut: '12:00 PM',
+            cancellation: 'Flexible'
+          }
+        }
+      ]
+      setProperties(mockProperties)
     } catch (err) {
       console.error('Failed to load properties:', err)
       setError('Failed to load properties. Please try again.')
@@ -76,8 +115,13 @@ export default function AdminPage({
 
   const loadStats = async () => {
     try {
-      const statsData = await getPropertyStats()
-      setStats(statsData)
+      setStats({
+        total: 5,
+        available: 3,
+        pending: 1,
+        averagePrice: 3200,
+        averageRating: 4.2
+      })
     } catch (err) {
       console.error('Failed to load stats:', err)
     }
@@ -100,9 +144,9 @@ export default function AdminPage({
 
     try {
       setError(null)
-      await deleteProperty(id)
-      await loadProperties() // Reload the list
-      await loadStats() // Update stats
+      // Remove from local state for now
+      setProperties(prev => prev.filter(p => p.id !== id))
+      await loadStats()
     } catch (err) {
       console.error('Failed to delete property:', err)
       setError('Failed to delete property. Please try again.')
@@ -115,16 +159,20 @@ export default function AdminPage({
       
       if (editingProperty) {
         // Update existing property
-        await updateProperty(editingProperty.id, propertyData)
+        setProperties(prev => prev.map(p => p.id === editingProperty.id ? { ...p, ...propertyData } : p))
       } else {
         // Create new property
-        await createProperty(propertyData)
+        const newProperty: Property = {
+          ...propertyData as Property,
+          id: Date.now().toString(),
+          rating: 4.0,
+          reviewCount: 0
+        }
+        setProperties(prev => [...prev, newProperty])
       }
       
-      // Close form and reload data
       setIsFormOpen(false)
       setEditingProperty(null)
-      await loadProperties()
       await loadStats()
       
     } catch (err) {
@@ -138,48 +186,25 @@ export default function AdminPage({
     loadStats()
   }
 
-  // Show password prompt if not authenticated
-  if (!isAuthenticated) {
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated')
+    localStorage.removeItem('userEmail')
+    router.push('/auth/login')
+  }
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <Lock className="mx-auto h-12 w-12 text-gray-400" />
-            <h2 className="mt-6 text-3xl font-bold text-gray-900">管理員登入</h2>
-            <p className="mt-2 text-sm text-gray-600">請輸入管理密碼</p>
-          </div>
-          <form className="mt-8 space-y-6" onSubmit={handlePasswordSubmit}>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                密碼
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-                placeholder="請輸入管理密碼"
-                value={passwordInput}
-                onChange={(e) => setPasswordInput(e.target.value)}
-              />
-            </div>
-            {passwordError && (
-              <div className="text-red-600 text-sm text-center">{passwordError}</div>
-            )}
-            <div>
-              <Button
-                type="submit"
-                variant="primary"
-                className="group relative flex w-full justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                登入
-              </Button>
-            </div>
-          </form>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
+          <p>Loading...</p>
         </div>
       </div>
     )
+  }
+
+  if (!isAuthenticated) {
+    return null // Will redirect to login
   }
 
   return (
@@ -189,6 +214,15 @@ export default function AdminPage({
         <div>
           <h1 className="text-3xl font-bold text-gray-900">房源管理</h1>
           <p className="text-gray-600 mt-2">管理您的住宿清單</p>
+          <div className="flex items-center space-x-4 mt-2">
+            <span className="text-sm text-gray-700">Welcome, {userEmail}</span>
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm"
+            >
+              Logout
+            </button>
+          </div>
           {error && (
             <div className="mt-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-md">
               {error}
@@ -295,9 +329,9 @@ export default function AdminPage({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  {(property.images && property.images.length > 0) || property.image_url ? (
+                  {property.images && property.images.length > 0 ? (
                     <img
-                      src={property.image_url || property.images[0]}
+                      src={property.images[0]}
                       alt={property.title}
                       className="w-16 h-16 object-cover rounded-lg"
                       onError={(e) => {

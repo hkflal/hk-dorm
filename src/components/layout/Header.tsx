@@ -2,10 +2,9 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Search, Menu, User, Heart } from 'lucide-react'
+import { Menu, User, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
-import { SearchBar } from './SearchBar'
 
 interface HeaderProps {
   locale?: string
@@ -13,7 +12,6 @@ interface HeaderProps {
 
 export function Header({ locale = 'zh-hk' }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
@@ -30,9 +28,6 @@ export function Header({ locale = 'zh-hk' }: HeaderProps) {
             <Link href={`/${locale}`} className="text-gray-700 hover:text-blue-600 transition-colors">
               首頁
             </Link>
-            <Link href={`/${locale}/search`} className="text-gray-700 hover:text-blue-600 transition-colors">
-              搜索住宿
-            </Link>
             <Link href={`/${locale}/admin`} className="text-gray-700 hover:text-blue-600 transition-colors">
               管理
             </Link>
@@ -43,15 +38,6 @@ export function Header({ locale = 'zh-hk' }: HeaderProps) {
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsSearchOpen(true)}
-              className="text-gray-600 hover:text-blue-600"
-            >
-              <Search className="h-5 w-5" />
-              <span className="ml-2">搜索</span>
-            </Button>
             
             <Link href={`/${locale}/profile`}>
               <Button
@@ -100,13 +86,6 @@ export function Header({ locale = 'zh-hk' }: HeaderProps) {
             首頁
           </Link>
           <Link 
-            href={`/${locale}/search`} 
-            className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            搜索住宿
-          </Link>
-          <Link 
             href={`/${locale}/admin`} 
             className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
             onClick={() => setIsMenuOpen(false)}
@@ -122,17 +101,6 @@ export function Header({ locale = 'zh-hk' }: HeaderProps) {
           </Link>
           
           <div className="border-t pt-4 space-y-2">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                setIsMenuOpen(false)
-                setIsSearchOpen(true)
-              }}
-            >
-              <Search className="h-5 w-5 mr-2" />
-              搜索
-            </Button>
             
             <Link href={`/${locale}/profile`}>
               <Button
@@ -157,11 +125,6 @@ export function Header({ locale = 'zh-hk' }: HeaderProps) {
             </Link>
           </div>
         </div>
-      </Modal>
-
-      {/* Search Modal */}
-      <Modal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} title="搜索住宿">
-        <SearchBar onSearch={() => setIsSearchOpen(false)} />
       </Modal>
 
     </header>
