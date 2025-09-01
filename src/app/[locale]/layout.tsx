@@ -9,6 +9,10 @@ import '../globals.css'
 
 const locales = ['en', 'zh-hk']
 
+export function generateStaticParams() {
+  return locales.map((locale) => ({ locale }))
+}
+
 export const metadata = {
   title: '外勞宿舍 - 香港勞工宿舍',
   description: '在香港尋找完美的宿舍。舒適、實惠且位置便利的打工人、學生和年輕專業人士住宿。',
