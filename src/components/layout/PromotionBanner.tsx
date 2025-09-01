@@ -20,10 +20,15 @@ export function PromotionBanner() {
   return (
     <StickyBanner className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-red-600">
       <p className="mx-0 max-w-[95%] text-red-600 drop-shadow-sm font-medium text-sm md:text-base">
-        🎉 {currentMonth}月優惠，雇主直租港九勞工宿舍床位港幣$2,200 起！{" "}
-        <Link href="/zh-hk/search" className="transition duration-200 hover:underline font-semibold ml-2 text-red-700 hover:text-red-800">
-          立即查看 →
-        </Link>
+        🎉 {currentMonth}月優惠，雇主直租港九勞工宿舍床位港幣$2,800 起！{" "}
+        <a 
+          href="https://wa.me/85244130760?text=你好！我想了解更多關於宿舍的資訊。" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="transition duration-200 hover:underline font-semibold ml-2 text-red-700 hover:text-red-800"
+        >
+          立即訂位 →
+        </a>
       </p>
     </StickyBanner>
   );

@@ -5,11 +5,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <html>
-      <body>
-        {children}
-      </body>
-    </html>
-  )
+  // Don't add html/body tags here since they're in [locale]/layout.tsx
+  return children
 }
