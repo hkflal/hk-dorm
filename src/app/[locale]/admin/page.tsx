@@ -30,8 +30,12 @@ export default function AdminPage({
   const [error, setError] = useState<string | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [userEmail, setUserEmail] = useState('')
+  const [locale, setLocale] = useState('zh-hk')
 
   useEffect(() => {
+    // Get locale from params
+    params.then(({ locale }) => setLocale(locale))
+    
     // Check authentication status from localStorage
     const authStatus = localStorage.getItem('isAuthenticated')
     const email = localStorage.getItem('userEmail')
@@ -42,10 +46,10 @@ export default function AdminPage({
       loadProperties()
       loadStats()
     } else {
-      router.push('/auth/login')
+      params.then(({ locale }) => router.push(`/${locale}/auth/login`))
     }
     setLoading(false)
-  }, [router])
+  }, [router, params])
 
   const loadProperties = async () => {
     try {
@@ -189,7 +193,7 @@ export default function AdminPage({
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated')
     localStorage.removeItem('userEmail')
-    router.push('/auth/login')
+    router.push(`/${locale}/auth/login`)
   }
 
   if (loading) {

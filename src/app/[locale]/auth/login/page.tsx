@@ -1,12 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function LoginPage() {
+export default function LoginPage({
+  params
+}: {
+  params: Promise<{ locale: string }>
+}) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [locale, setLocale] = useState('zh-hk')
   const router = useRouter()
+
+  // Get locale from params
+  useEffect(() => {
+    params.then(({ locale }) => setLocale(locale))
+  }, [params])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -19,7 +29,7 @@ export default function LoginPage() {
       // Store auth status in localStorage
       localStorage.setItem('isAuthenticated', 'true')
       localStorage.setItem('userEmail', email)
-      router.push('/admin')
+      router.push(`/${locale}/admin`)
     } else {
       alert('Invalid credentials. Please use an @hkflal.com email and correct password.')
     }
