@@ -17,6 +17,7 @@ import {
 import { getPropertyById, getProperties } from '@/lib/data'
 import { PropertyGallery } from '@/components/property/PropertyGallery'
 import { BookingWidget } from '@/components/property/BookingWidget'
+import { GoogleMap } from '@/components/property/GoogleMap'
 import { Badge } from '@/components/ui/Badge'
 
 interface PropertyPageProps {
@@ -237,11 +238,12 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
             <h3 className="text-lg font-semibold mb-4">
               位置資訊
             </h3>
-            <div className="bg-gray-200 h-64 rounded-lg flex items-center justify-center">
-              <p className="text-gray-600">
-                地圖將會整合於此 - {property.location.address}
-              </p>
-            </div>
+            <GoogleMap
+              address={property.location.address}
+              title={property.title}
+              coordinates={property.location.coordinates}
+              nearbyMTR={property.location.nearbyMTR}
+            />
             <div className="mt-4 space-y-2">
               <h4 className="font-medium">附近港鐵站:</h4>
               <div className="flex flex-wrap gap-2">
