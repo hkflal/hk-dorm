@@ -25,7 +25,7 @@
     "nextMonthAvailable": "Available next month in Hong Kong"
   },
   "property": {
-    "perNight": "per night",
+    "perMonth": "per month",
     "guests": "guests",
     "bedrooms": "bedrooms",
     "bathrooms": "bathrooms",

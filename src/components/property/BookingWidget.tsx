@@ -15,16 +15,17 @@ export function BookingWidget({ property }: BookingWidgetProps) {
   const [checkOut, setCheckOut] = useState('')
   const [guests, setGuests] = useState(1)
 
-  const calculateNights = () => {
+  const calculateMonths = () => {
     if (!checkIn || !checkOut) return 0
     const start = new Date(checkIn)
     const end = new Date(checkOut)
     const diffTime = Math.abs(end.getTime() - start.getTime())
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return Math.max(1, Math.ceil(days / 30))
   }
 
-  const nights = calculateNights()
-  const subtotal = nights * property.price
+  const months = calculateMonths()
+  const subtotal = months * property.price
   const serviceFee = subtotal * 0.1 // 10% service fee
   const cleaningFee = 200 // HKD
   const total = subtotal + serviceFee + cleaningFee
@@ -39,7 +40,7 @@ export function BookingWidget({ property }: BookingWidgetProps) {
               <span className="text-2xl font-semibold text-gray-900">
                 HK${property.price}
               </span>
-              <span className="text-gray-600 ml-1">/晚</span>
+              <span className="text-gray-600 ml-1">/月</span>
             </div>
             <div className="flex items-center">
               <Star className="w-4 h-4 text-yellow-400 fill-current" />
@@ -107,7 +108,7 @@ export function BookingWidget({ property }: BookingWidgetProps) {
             variant="secondary" 
             size="lg" 
             className="w-full mb-4"
-            disabled={!checkIn || !checkOut || nights <= 0}
+            disabled={!checkIn || !checkOut || months <= 0}
           >
             立即預訂
           </Button>
@@ -117,11 +118,11 @@ export function BookingWidget({ property }: BookingWidgetProps) {
           </p>
 
           {/* Price Breakdown */}
-          {nights > 0 && (
+          {months > 0 && (
             <div className="space-y-3 pt-4 border-t border-gray-200">
               <div className="flex justify-between text-sm">
                 <span className="underline">
-                  HK${property.price} x {nights} 晚
+                  HK${property.price} x {months} 個月
                 </span>
                 <span>HK${subtotal}</span>
               </div>

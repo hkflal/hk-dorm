@@ -173,7 +173,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
               {formatPrice(property.price)}
             </span>
             <span className="text-sm text-gray-600 ml-1">
-              {t('perNight')}
+              {t('perMonth')}
             </span>
           </div>
         </div>
