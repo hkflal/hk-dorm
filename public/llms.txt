@@ -1,0 +1,20 @@
+# Labour Dorm
+
+Labour Dorm is a Hong Kong accommodation directory for people looking for monthly dormitory beds and worker accommodation.
+
+## Canonical site
+
+- https://labour-dorm.com/zh-hk/
+
+## Main pages
+
+- Chinese accommodation listings: https://labour-dorm.com/zh-hk/
+- English accommodation listings: https://labour-dorm.com/en/
+- About Labour Dorm: https://labour-dorm.com/zh-hk/about/
+- XML sitemap: https://labour-dorm.com/sitemap.xml
+
+## Key facts
+
+- Listings show monthly prices in Hong Kong dollars.
+- Each property page includes its location, facilities, available bed details and an enquiry route via WhatsApp.
+- The site supports Traditional Chinese and English.

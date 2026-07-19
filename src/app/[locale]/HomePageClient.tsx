@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import Image from 'next/image'
 import { PropertyGrid } from '@/components/property/PropertyGrid'
 import { HeroTitle } from '@/components/layout/HeroTitle'
 import { Property } from '@/lib/types'
@@ -28,12 +29,14 @@ export default function HomePageClient({ locale = 'zh-hk', initialProperties }: 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center text-white">
           {/* Background Image */}
-          <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{
-              backgroundImage: "url('/images/hero-dorm.jpg')"
-            }}
-          ></div>
+          <Image
+            src="/images/hero-dorm.jpg"
+            alt="香港勞工宿舍"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center"
+          />
           
           {/* Overlay */}
           <div className="absolute inset-0 bg-black bg-opacity-50"></div>

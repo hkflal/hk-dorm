@@ -3,7 +3,13 @@
 import React from 'react'
 import Link from 'next/link'
 
-export function Footer() {
+interface FooterProps {
+  locale: string
+}
+
+export function Footer({ locale }: FooterProps) {
+  const localizedPath = (path = '') => `/${locale}${path}`
+
   return (
     <footer className="bg-gray-50 border-t border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -13,18 +19,13 @@ export function Footer() {
             <h3 className="text-lg font-semibold text-gray-900">公司</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/about" className="text-gray-600 hover:text-blue-600 transition-colors">
+                <Link href={localizedPath('/about')} className="text-gray-600 hover:text-blue-600 transition-colors">
                   關於我們
                 </Link>
               </li>
               <li>
-                <Link href="/careers" className="text-gray-600 hover:text-blue-600 transition-colors">
-                  招聘
-                </Link>
-              </li>
-              <li>
-                <Link href="/press" className="text-gray-600 hover:text-blue-600 transition-colors">
-                  新聞
+                <Link href={localizedPath()} className="text-gray-600 hover:text-blue-600 transition-colors">
+                  瀏覽宿舍
                 </Link>
               </li>
             </ul>
@@ -32,43 +33,33 @@ export function Footer() {
 
           {/* Policies */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">政策</h3>
+            <h3 className="text-lg font-semibold text-gray-900">聯絡方式</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/terms" className="text-gray-600 hover:text-blue-600 transition-colors">
-                  使用條款
-                </Link>
+                <a href="https://wa.me/85244130760" className="text-gray-600 hover:text-blue-600 transition-colors">
+                  WhatsApp 查詢
+                </a>
               </li>
               <li>
-                <Link href="/privacy" className="text-gray-600 hover:text-blue-600 transition-colors">
-                  私隱政策
-                </Link>
-              </li>
-              <li>
-                <Link href="/sitemap" className="text-gray-600 hover:text-blue-600 transition-colors">
-                  網站地圖
-                </Link>
+                <a href="tel:+85244130760" className="text-gray-600 hover:text-blue-600 transition-colors">
+                  +852 4413 0760
+                </a>
               </li>
             </ul>
           </div>
 
           {/* Support */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">支援</h3>
+            <h3 className="text-lg font-semibold text-gray-900">資源</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/help" className="text-gray-600 hover:text-blue-600 transition-colors">
-                  幫助中心
-                </Link>
+                <a href="/sitemap.xml" className="text-gray-600 hover:text-blue-600 transition-colors">
+                  網站地圖
+                </a>
               </li>
               <li>
-                <Link href="/contact" className="text-gray-600 hover:text-blue-600 transition-colors">
-                  聯絡我們
-                </Link>
-              </li>
-              <li>
-                <Link href="/safety" className="text-gray-600 hover:text-blue-600 transition-colors">
-                  安全中心
+                <Link href={localizedPath('/about')} className="text-gray-600 hover:text-blue-600 transition-colors">
+                  平台介紹
                 </Link>
               </li>
             </ul>
@@ -79,7 +70,7 @@ export function Footer() {
             <h3 className="text-lg font-semibold text-gray-900">信任與安全</h3>
             <div className="space-y-2">
               <p className="text-gray-600">
-                香港值得信賴的學生住宿平台
+              香港月租勞工宿舍平台
               </p>
               <div className="flex items-center space-x-2">
                 <div className="text-2xl font-bold text-blue-600">外勞宿舍</div>
@@ -95,15 +86,12 @@ export function Footer() {
               © 2025 外勞宿舍 Labour Dorm Hub. 版權所有。
             </div>
             <div className="flex items-center space-x-6 mt-4 md:mt-0">
-              <Link href="/terms" className="text-sm text-gray-500 hover:text-blue-600">
-                條款
+              <Link href={localizedPath('/about')} className="text-sm text-gray-500 hover:text-blue-600">
+                關於我們
               </Link>
-              <Link href="/privacy" className="text-sm text-gray-500 hover:text-blue-600">
-                私隱
-              </Link>
-              <Link href="/cookies" className="text-sm text-gray-500 hover:text-blue-600">
-                Cookies
-              </Link>
+              <a href="/robots.txt" className="text-sm text-gray-500 hover:text-blue-600">
+                Robots
+              </a>
             </div>
           </div>
         </div>

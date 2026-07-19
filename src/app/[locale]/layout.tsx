@@ -5,6 +5,8 @@ import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { PromotionBanner } from '@/components/layout/PromotionBanner'
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton'
+import type { Metadata } from 'next'
+import { getLocaleMetadata, siteName, siteUrl } from '@/lib/seo'
 import '../globals.css'
 
 const locales = ['en', 'zh-hk']
@@ -13,17 +15,46 @@ export function generateStaticParams() {
   return locales.map((locale) => ({ locale }))
 }
 
-export const metadata = {
-  title: '外勞宿舍 - 香港勞工宿舍',
-  description: '在香港尋找完美的宿舍。舒適、實惠且位置便利的打工人、學生和年輕專業人士住宿。',
-  keywords: '香港, 勞工宿舍, 宿舍, 住宿, 租房',
-  authors: [{ name: '外勞宿舍' }],
-  openGraph: {
-    title: '外勞宿舍 - 雇主話可靠的香港勞工宿舍',
-    description: '全港性價比最高的勞工宿舍',
-    type: 'website',
-    locale: 'zh_HK',
-  },
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const localized = getLocaleMetadata(locale)
+  const localePath = locale === 'en' ? '/en/' : '/zh-hk/'
+
+  return {
+    metadataBase: new URL(siteUrl),
+    title: {
+      default: localized.title as string,
+      template: `%s | ${siteName}`,
+    },
+    description: localized.description,
+    keywords: localized.keywords,
+    authors: [{ name: siteName }],
+    alternates: {
+      canonical: localePath,
+      languages: {
+        en: '/en/',
+        'zh-HK': '/zh-hk/',
+        'x-default': '/zh-hk/',
+      },
+    },
+    openGraph: {
+      title: localized.title,
+      description: localized.description,
+      url: localePath,
+      siteName,
+      type: 'website',
+      locale: locale === 'en' ? 'en_HK' : 'zh_HK',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: localized.title,
+      description: localized.description,
+    },
+  }
 }
 
 export default async function LocaleLayout({
@@ -56,7 +87,7 @@ export default async function LocaleLayout({
           <main className="min-h-screen">
             {children}
           </main>
-          <Footer />
+          <Footer locale={locale} />
           <WhatsAppButton />
         </NextIntlClientProvider>
       </body>

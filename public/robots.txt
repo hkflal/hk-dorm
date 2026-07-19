@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /zh-hk/admin/
+Disallow: /en/admin/
+Disallow: /zh-hk/auth/
+Disallow: /en/auth/
+
+Sitemap: https://labour-dorm.com/sitemap.xml

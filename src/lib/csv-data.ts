@@ -50,7 +50,7 @@ export const csvProperties: Property[] = [
     "host": {
       "id": "host-1",
       "name": "Jenny Lau",
-      "avatar": "https://images.unsplash.com/photo-1500000001000?w=150&h=150&fit=crop&crop=face",
+      "avatar": "/images/agents/dorm-agent-256.png",
       "isSuperhost": false,
       "responseTime": "30 minutes"
     },
@@ -115,7 +115,7 @@ export const csvProperties: Property[] = [
     "host": {
       "id": "host-2",
       "name": "Amy Ho",
-      "avatar": "https://images.unsplash.com/photo-1500000002000?w=150&h=150&fit=crop&crop=face",
+      "avatar": "/images/agents/dorm-agent-256.png",
       "isSuperhost": false,
       "responseTime": "2 hours"
     },
@@ -179,7 +179,7 @@ export const csvProperties: Property[] = [
     "host": {
       "id": "host-3",
       "name": "Sarah Cheung",
-      "avatar": "https://images.unsplash.com/photo-1500000003000?w=150&h=150&fit=crop&crop=face",
+      "avatar": "/images/agents/dorm-agent-256.png",
       "isSuperhost": true,
       "responseTime": "2 hours"
     },
@@ -242,7 +242,7 @@ export const csvProperties: Property[] = [
     "host": {
       "id": "host-4",
       "name": "Lisa Ng",
-      "avatar": "https://images.unsplash.com/photo-1500000004000?w=150&h=150&fit=crop&crop=face",
+      "avatar": "/images/agents/dorm-agent-256.png",
       "isSuperhost": true,
       "responseTime": "1 hour"
     },
@@ -308,7 +308,7 @@ export const csvProperties: Property[] = [
     "host": {
       "id": "host-5",
       "name": "Jenny Wong",
-      "avatar": "https://images.unsplash.com/photo-1500000005000?w=150&h=150&fit=crop&crop=face",
+      "avatar": "/images/agents/dorm-agent-256.png",
       "isSuperhost": true,
       "responseTime": "2 hours"
     },
@@ -373,7 +373,7 @@ export const csvProperties: Property[] = [
     "host": {
       "id": "host-6",
       "name": "Michael Ho",
-      "avatar": "https://images.unsplash.com/photo-1500000006000?w=150&h=150&fit=crop&crop=face",
+      "avatar": "/images/agents/dorm-agent-256.png",
       "isSuperhost": false,
       "responseTime": "1 hour"
     },
@@ -435,7 +435,7 @@ export const csvProperties: Property[] = [
     "host": {
       "id": "host-7",
       "name": "David Lau",
-      "avatar": "https://images.unsplash.com/photo-1500000007000?w=150&h=150&fit=crop&crop=face",
+      "avatar": "/images/agents/dorm-agent-256.png",
       "isSuperhost": true,
       "responseTime": "30 minutes"
     },
@@ -499,7 +499,7 @@ export const csvProperties: Property[] = [
     "host": {
       "id": "host-8",
       "name": "Sarah Wong",
-      "avatar": "https://images.unsplash.com/photo-1500000008000?w=150&h=150&fit=crop&crop=face",
+      "avatar": "/images/agents/dorm-agent-256.png",
       "isSuperhost": false,
       "responseTime": "1 hour"
     },

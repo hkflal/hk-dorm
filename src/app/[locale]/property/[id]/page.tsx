@@ -19,6 +19,7 @@ import { PropertyGallery } from '@/components/property/PropertyGallery'
 import { BookingWidget } from '@/components/property/BookingWidget'
 import { GoogleMap } from '@/components/property/GoogleMap'
 import { Badge } from '@/components/ui/Badge'
+import { siteName, siteUrl } from '@/lib/seo'
 
 interface PropertyPageProps {
   params: Promise<{
@@ -51,11 +52,29 @@ export async function generateMetadata({ params }: PropertyPageProps) {
     }
   }
 
+  const isEnglish = locale === 'en'
+  const path = `/${isEnglish ? 'en' : 'zh-hk'}/property/${property.id}/`
+  const description = isEnglish
+    ? `${property.title} in ${property.location.district}, Hong Kong. View facilities, location and the monthly rate of HK$${property.price.toLocaleString('en-US')}.`
+    : `香港${property.location.district}${property.title}月租宿舍。查看設施、位置及每月 HK$${property.price.toLocaleString('en-US')} 的住宿資料。`
+
   return {
-    title: `${property.title} - 外勞宿舍`,
-    description: property.description,
+    title: property.title,
+    description,
+    alternates: {
+      canonical: path,
+      languages: {
+        en: `/en/property/${property.id}/`,
+        'zh-HK': `/zh-hk/property/${property.id}/`,
+        'x-default': `/zh-hk/property/${property.id}/`,
+      },
+    },
     openGraph: {
-      images: [property.images[0]],
+      title: property.title,
+      description,
+      url: path,
+      type: 'website',
+      images: property.images[0] ? [property.images[0]] : [],
     },
   }
 }
@@ -66,6 +85,48 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   
   if (!property) {
     notFound()
+  }
+
+  const propertyPath = `/${locale}/property/${property.id}/`
+  const propertyUrl = `${siteUrl}${propertyPath}`
+  const propertySchema = {
+    '@context': 'https://schema.org',
+    '@type': 'LodgingBusiness',
+    name: property.title,
+    description: property.description,
+    url: propertyUrl,
+    image: property.images.map((image) => new URL(image, siteUrl).toString()),
+    priceRange: `HK$${property.price.toLocaleString('en-US')} / month`,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: property.location.address,
+      addressLocality: property.location.district,
+      addressRegion: 'Hong Kong',
+      addressCountry: 'HK',
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: property.rating,
+      reviewCount: property.reviewCount,
+    },
+    amenityFeature: property.amenities.map((amenity) => ({
+      '@type': 'LocationFeatureSpecification',
+      name: getAmenityName(amenity),
+      value: true,
+    })),
+    brand: {
+      '@type': 'Organization',
+      name: siteName,
+    },
+  }
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: siteName, item: `${siteUrl}/${locale}/` },
+      { '@type': 'ListItem', position: 2, name: property.title, item: propertyUrl },
+    ],
   }
 
   const amenityIcons: Record<string, React.ReactNode> = {
@@ -82,6 +143,14 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(propertySchema).replace(/</g, '\\u003c') }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema).replace(/</g, '\\u003c') }}
+      />
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-2">

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Menu, User, Heart } from 'lucide-react'
+import { Menu, User } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 
@@ -39,17 +39,6 @@ export function Header({ locale = 'zh-hk' }: HeaderProps) {
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center space-x-4">
             
-            <Link href={`/${locale}/profile`}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-gray-600 hover:text-blue-600"
-              >
-                <Heart className="h-5 w-5" />
-                <span className="ml-2">收藏</span>
-              </Button>
-            </Link>
-
             <Link href={`/${locale}/auth/login`}>
               <Button
                 variant="outline"
@@ -101,17 +90,6 @@ export function Header({ locale = 'zh-hk' }: HeaderProps) {
           </Link>
           
           <div className="border-t pt-4 space-y-2">
-            
-            <Link href={`/${locale}/profile`}>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <Heart className="h-5 w-5 mr-2" />
-                收藏
-              </Button>
-            </Link>
             
             <Link href={`/${locale}/auth/login`}>
               <Button

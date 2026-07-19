@@ -14,10 +14,35 @@ import {
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import type { Metadata } from 'next'
+import { siteUrl } from '@/lib/seo'
 
-export const metadata = {
-  title: '關於我們 - 外勞宿舍',
-  description: '了解外勞宿舍的使命、服務和團隊。我們致力於為香港的勞工和學生提供優質、安全、實惠的住宿解決方案。',
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const isEnglish = locale === 'en'
+  const path = `/${isEnglish ? 'en' : 'zh-hk'}/about/`
+  const title = isEnglish ? 'About Labour Dorm' : '關於 Labour Dorm'
+  const description = isEnglish
+    ? 'Learn how Labour Dorm helps people find practical, monthly accommodation in Hong Kong.'
+    : '了解 Labour Dorm 如何協助住客在香港尋找實用、透明的月租宿舍。'
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: path,
+      languages: {
+        en: '/en/about/',
+        'zh-HK': '/zh-hk/about/',
+        'x-default': '/zh-hk/about/',
+      },
+    },
+    openGraph: { title, description, url: `${siteUrl}${path}`, type: 'website' },
+  }
 }
 
 export function generateStaticParams() {
