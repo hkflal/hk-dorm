@@ -1,40 +1,27 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { PropertyGrid } from '@/components/property/PropertyGrid'
-import { TrustedPartners } from '@/components/layout/TrustedPartners'
-import { PropertyFeaturesCarousel } from '@/components/property/PropertyFeaturesCarousel'
 import { HeroTitle } from '@/components/layout/HeroTitle'
-import { getProperties } from '@/lib/data'
-import { useEffect, useState } from 'react'
 import { Property } from '@/lib/types'
 
 interface HomePageClientProps {
   locale?: string
+  initialProperties: Property[]
 }
 
-export default function HomePageClient({ locale = 'zh-hk' }: HomePageClientProps) {
-  const [properties, setProperties] = useState<Property[]>([])
-  const [loading, setLoading] = useState(true)
+const TrustedPartners = dynamic(
+  () => import('@/components/layout/TrustedPartners').then((mod) => mod.TrustedPartners),
+  { ssr: false, loading: () => <section className="py-16 bg-gray-50" aria-hidden="true" /> }
+)
 
-  useEffect(() => {
-    async function loadProperties() {
-      try {
-        const allProperties = await getProperties()
-        // Filter to only show properties with images
-        const filteredProperties = allProperties.filter(property => 
-          property.images && property.images.length > 0
-        )
-        setProperties(filteredProperties)
-      } catch (error) {
-        console.error('Failed to load properties:', error)
-        setProperties([])
-      } finally {
-        setLoading(false)
-      }
-    }
-    
-    loadProperties()
-  }, [])
+const PropertyFeaturesCarousel = dynamic(
+  () => import('@/components/property/PropertyFeaturesCarousel').then((mod) => mod.PropertyFeaturesCarousel),
+  { ssr: false, loading: () => <section className="py-20" aria-hidden="true" /> }
+)
+
+export default function HomePageClient({ locale = 'zh-hk', initialProperties }: HomePageClientProps) {
+  const properties = initialProperties
   
   return (
     <>

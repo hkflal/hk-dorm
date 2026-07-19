@@ -128,6 +128,8 @@ export function PropertyGallery({ images, title }: PropertyGalleryProps) {
             alt={`${title} - Main view`}
             fill
             className="object-cover group-hover:brightness-75 transition-all duration-200"
+            sizes="(max-width: 768px) 100vw, 50vw"
+            priority
           />
         </div>
 
@@ -146,6 +148,8 @@ export function PropertyGallery({ images, title }: PropertyGalleryProps) {
               alt={`${title} - View ${index + 2}`}
               fill
               className="object-cover group-hover:brightness-75 transition-all duration-200"
+              sizes="(max-width: 768px) 50vw, 25vw"
+              loading="lazy"
             />
             {/* Show all photos overlay on last image */}
             {index === 3 && images.length > 5 && (
@@ -312,6 +316,8 @@ export function PropertyGallery({ images, title }: PropertyGalleryProps) {
                         alt={`${title} - Thumbnail ${index + 1}`}
                         fill
                         className="object-cover"
+                        sizes="64px"
+                        loading="lazy"
                       />
                       {index === currentImageIndex && (
                         <div className="absolute inset-0 bg-white/20" />
