@@ -50,7 +50,7 @@ export const csvProperties: Property[] = [
     "host": {
       "id": "host-1",
       "name": "Jenny Lau",
-      "avatar": "/images/agents/dorm-agent-256.png",
+      "avatar": "/images/agents/dorm-agent-v2.jpg",
       "isSuperhost": false,
       "responseTime": "30 minutes"
     },
@@ -115,7 +115,7 @@ export const csvProperties: Property[] = [
     "host": {
       "id": "host-2",
       "name": "Amy Ho",
-      "avatar": "/images/agents/dorm-agent-256.png",
+      "avatar": "/images/agents/dorm-agent-v2.jpg",
       "isSuperhost": false,
       "responseTime": "2 hours"
     },
@@ -179,7 +179,7 @@ export const csvProperties: Property[] = [
     "host": {
       "id": "host-3",
       "name": "Sarah Cheung",
-      "avatar": "/images/agents/dorm-agent-256.png",
+      "avatar": "/images/agents/dorm-agent-v2.jpg",
       "isSuperhost": true,
       "responseTime": "2 hours"
     },
@@ -242,7 +242,7 @@ export const csvProperties: Property[] = [
     "host": {
       "id": "host-4",
       "name": "Lisa Ng",
-      "avatar": "/images/agents/dorm-agent-256.png",
+      "avatar": "/images/agents/dorm-agent-v2.jpg",
       "isSuperhost": true,
       "responseTime": "1 hour"
     },
@@ -308,7 +308,7 @@ export const csvProperties: Property[] = [
     "host": {
       "id": "host-5",
       "name": "Jenny Wong",
-      "avatar": "/images/agents/dorm-agent-256.png",
+      "avatar": "/images/agents/dorm-agent-v2.jpg",
       "isSuperhost": true,
       "responseTime": "2 hours"
     },
@@ -373,7 +373,7 @@ export const csvProperties: Property[] = [
     "host": {
       "id": "host-6",
       "name": "Michael Ho",
-      "avatar": "/images/agents/dorm-agent-256.png",
+      "avatar": "/images/agents/dorm-agent-v2.jpg",
       "isSuperhost": false,
       "responseTime": "1 hour"
     },
@@ -435,7 +435,7 @@ export const csvProperties: Property[] = [
     "host": {
       "id": "host-7",
       "name": "David Lau",
-      "avatar": "/images/agents/dorm-agent-256.png",
+      "avatar": "/images/agents/dorm-agent-v2.jpg",
       "isSuperhost": true,
       "responseTime": "30 minutes"
     },
@@ -499,7 +499,7 @@ export const csvProperties: Property[] = [
     "host": {
       "id": "host-8",
       "name": "Sarah Wong",
-      "avatar": "/images/agents/dorm-agent-256.png",
+      "avatar": "/images/agents/dorm-agent-v2.jpg",
       "isSuperhost": false,
       "responseTime": "1 hour"
     },

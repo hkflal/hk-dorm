@@ -208,11 +208,12 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
             {/* Host Info */}
             <div className="flex items-center space-x-3">
               <Image
-                src={property.host.avatar}
+                src={property.host.avatar || '/images/agents/dorm-agent-v2.jpg'}
                 alt={property.host.name}
                 width={40}
                 height={40}
-                className="rounded-full"
+                priority
+                className="rounded-full object-cover"
               />
               <div>
                 <p className="font-medium">由 {property.host.name} 接待</p>
