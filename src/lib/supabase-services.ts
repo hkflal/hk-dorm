@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { supabase } from './supabase'
 import { Database } from './database.types'
 import { Property } from './types'

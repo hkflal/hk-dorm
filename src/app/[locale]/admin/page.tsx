@@ -1,414 +1,92 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
+import { Archive, Eye, EyeOff, ExternalLink, FilePenLine, LoaderCircle, LogOut, Plus, RotateCcw, Search, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { Plus, Edit, Trash2, Eye, Upload, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Card, CardContent } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { PropertyForm } from '@/components/admin/PropertyForm'
+import { useAuth } from '@/contexts/AuthContext'
+import { adminDataMode, adminWritesAvailable, archiveProperty, createProperty, deletePropertyPermanently, getAdminProperties, getAdminStats, resetLocalAdminProperties, setPropertyPublished, updateProperty } from '@/lib/firebase-services'
+import { getPropertyDistricts, isIndexableProperty } from '@/lib/property-visibility'
 import { Property } from '@/lib/types'
 
-export default function AdminPage({
-  params
-}: {
-  params: Promise<{ locale: string }>
-}) {
+export default function AdminPage({ params }: { params: Promise<{ locale: string }> }) {
   const router = useRouter()
-  const [properties, setProperties] = useState<Property[]>([])
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingProperty, setEditingProperty] = useState<Property | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState({
-    total: 0,
-    available: 0,
-    pending: 0,
-    averagePrice: 0,
-    averageRating: 0
-  })
-  const [error, setError] = useState<string | null>(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [userEmail, setUserEmail] = useState('')
+  const { user, isAdmin, loading: authLoading, signOutUser } = useAuth()
   const [locale, setLocale] = useState('zh-hk')
+  const [properties, setProperties] = useState<Property[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('all')
+  const [district, setDistrict] = useState('all')
+  const [editing, setEditing] = useState<Property | null | 'new'>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Property | null>(null)
+  const [confirmText, setConfirmText] = useState('')
+  const [togglingId, setTogglingId] = useState<string | null>(null)
 
-  useEffect(() => {
-    // Get locale from params
-    params.then(({ locale }) => setLocale(locale))
-    
-    // Check authentication status from localStorage
-    const authStatus = localStorage.getItem('isAuthenticated')
-    const email = localStorage.getItem('userEmail')
-    
-    if (authStatus === 'true' && email) {
-      setIsAuthenticated(true)
-      setUserEmail(email)
-      loadProperties()
-      loadStats()
-    } else {
-      params.then(({ locale }) => router.push(`/${locale}/auth/login`))
-    }
-    setLoading(false)
-  }, [router, params])
+  useEffect(() => { params.then(({ locale: nextLocale }) => setLocale(nextLocale)) }, [params])
+  useEffect(() => { if (!authLoading && (!user || !isAdmin)) router.replace(`/${locale}/auth/login/`) }, [authLoading, user, isAdmin, router, locale])
 
-  const loadProperties = async () => {
+  const load = async () => {
+    if (!isAdmin) return
+    setLoading(true); setError('')
+    try { setProperties(await getAdminProperties()) } catch { setError('未能讀取房源。請確認 Emulator／Firebase 設定與管理權限。') } finally { setLoading(false) }
+  }
+  useEffect(() => { if (isAdmin) void load() }, [isAdmin])
+  const stats = useMemo(() => getAdminStats(properties), [properties])
+  const filtered = useMemo(() => properties.filter((property) => {
+    const matchesText = [property.title, property.titleEn, property.address, property.property_id].filter(Boolean).join(' ').toLowerCase().includes(search.toLowerCase())
+    const matchesStatus = status === 'all'
+      ? true
+      : status === 'published'
+        ? isIndexableProperty(property)
+        : property.status === status
+    return matchesText
+      && matchesStatus
+      && (district === 'all' || property.district === district)
+  }), [properties, search, status, district])
+
+  const save = async (data: Partial<Property>) => {
+    setError('')
     try {
-      setLoading(true)
-      setError(null)
-      // Mock data for now - replace with actual data loading
-      const mockProperties: Property[] = [
-        {
-          id: '1',
-          property_id: 'dorm-001',
-          type: '勞工舍宿',
-          title: '西洋菜南街',
-          subtitle: '在旺角的勞工舍宿',
-          description: 'Modern worker dormitory in the heart of Mong Kok',
-          address: '旺角西洋菜南街166號',
-          district: 'Mong Kok',
-          price: 3500,
-          currency: 'HKD',
-          unit: '床位',
-          status: 'active',
-          available_at: 'now',
-          occupation: '85%',
-          images: ['https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=400&h=300&fit=crop'],
-          rating: 4.2,
-          reviewCount: 15,
-          location: {
-            district: 'Mong Kok',
-            address: '旺角西洋菜南街166號',
-            nearbyMTR: ['Mong Kok', 'Prince Edward'],
-            coordinates: { lat: 22.3193, lng: 114.1694 }
-          },
-          details: {
-            guests: 1,
-            bedrooms: 0,
-            bathrooms: 1,
-            propertyType: '勞工舍宿',
-            roomType: 'shared room'
-          },
-          amenities: ['wifi', 'aircon', 'nearMTR', 'laundry'],
-          host: {
-            id: 'host-1',
-            name: 'HKFLAL Admin',
-            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-            isSuperhost: true,
-            responseTime: '1 hour'
-          },
-          availability: {
-            available: true,
-            minStay: 30,
-            maxStay: 365
-          },
-          policies: {
-            checkIn: '2:00 PM',
-            checkOut: '12:00 PM',
-            cancellation: 'Flexible'
-          }
-        }
-      ]
-      setProperties(mockProperties)
-    } catch (err) {
-      console.error('Failed to load properties:', err)
-      setError('Failed to load properties. Please try again.')
-    } finally {
-      setLoading(false)
+      if (editing && editing !== 'new') await updateProperty(editing.id, data)
+      else await createProperty(data)
+      setEditing(null); await load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '未能儲存房源。')
     }
   }
-
-  const loadStats = async () => {
+  const archive = async (property: Property) => { if (window.confirm(`確定下架「${property.title}」？公開網站將不再顯示。`)) { await archiveProperty(property.id); await load() } }
+  const togglePublished = async (property: Property) => {
+    setError('')
+    setTogglingId(property.id)
     try {
-      setStats({
-        total: 5,
-        available: 3,
-        pending: 1,
-        averagePrice: 3200,
-        averageRating: 4.2
-      })
-    } catch (err) {
-      console.error('Failed to load stats:', err)
-    }
+      await setPropertyPublished(property.id, property.status !== 'active')
+      await load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '未能更新發布狀態。')
+    } finally { setTogglingId(null) }
   }
-
-  const handleAddProperty = () => {
-    setEditingProperty(null)
-    setIsFormOpen(true)
+  const permanentlyDelete = async () => { if (!deleteTarget || confirmText !== deleteTarget.property_id) return; await deletePropertyPermanently(deleteTarget.id); setDeleteTarget(null); setConfirmText(''); await load() }
+  const resetLocalData = async () => {
+    if (!window.confirm('確定要捨棄所有本地測試改動，還原網站原有房源？')) return
+    await resetLocalAdminProperties()
+    await load()
   }
+  const logout = async () => { await signOutUser(); router.replace(`/${locale}/auth/login/`) }
 
-  const handleEditProperty = (property: Property) => {
-    setEditingProperty(property)
-    setIsFormOpen(true)
-  }
-
-  const handleDeleteProperty = async (id: string) => {
-    if (!confirm('您確定要刪除這個房源嗎？此操作無法撤銷。')) {
-      return
-    }
-
-    try {
-      setError(null)
-      // Remove from local state for now
-      setProperties(prev => prev.filter(p => p.id !== id))
-      await loadStats()
-    } catch (err) {
-      console.error('Failed to delete property:', err)
-      setError('Failed to delete property. Please try again.')
-    }
-  }
-
-  const handleSaveProperty = async (propertyData: Partial<Property>) => {
-    try {
-      setError(null)
-      
-      if (editingProperty) {
-        // Update existing property
-        setProperties(prev => prev.map(p => p.id === editingProperty.id ? { ...p, ...propertyData } : p))
-      } else {
-        // Create new property
-        const newProperty: Property = {
-          ...propertyData as Property,
-          id: Date.now().toString(),
-          rating: 4.0,
-          reviewCount: 0
-        }
-        setProperties(prev => [...prev, newProperty])
-      }
-      
-      setIsFormOpen(false)
-      setEditingProperty(null)
-      await loadStats()
-      
-    } catch (err) {
-      console.error('Failed to save property:', err)
-      setError('Failed to save property. Please try again.')
-    }
-  }
-
-  const handleRefresh = () => {
-    loadProperties()
-    loadStats()
-  }
-
-  const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated')
-    localStorage.removeItem('userEmail')
-    router.push(`/${locale}/auth/login`)
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
-          <p>Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
-    return null // Will redirect to login
-  }
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">房源管理</h1>
-          <p className="text-gray-600 mt-2">管理您的住宿清單</p>
-          <div className="flex items-center space-x-4 mt-2">
-            <span className="text-sm text-gray-700">Welcome, {userEmail}</span>
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm"
-            >
-              Logout
-            </button>
-          </div>
-          {error && (
-            <div className="mt-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-md">
-              {error}
-            </div>
-          )}
-        </div>
-        <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            onClick={handleRefresh}
-            disabled={loading}
-            className="flex items-center space-x-2"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            <span>刷新</span>
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleAddProperty}
-            className="flex items-center space-x-2"
-          >
-            <Plus className="w-4 h-4" />
-            <span>新增房源</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">總房源數</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Eye className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">現在可用</p>
-                <p className="text-2xl font-bold text-green-600">{stats.available}</p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <Upload className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">平均評分</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.averageRating}</p>
-              </div>
-              <div className="p-3 bg-yellow-100 rounded-full">
-                <Eye className="w-6 h-6 text-yellow-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">平均價格/月</p>
-                <p className="text-2xl font-bold text-purple-600">HK${stats.averagePrice}</p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-full">
-                <Upload className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Properties List */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-gray-900">所有房源</h2>
-        
-        {loading ? (
-          <div className="flex justify-center py-8">
-            <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
-            <span className="ml-2 text-gray-500">載入中...</span>
-          </div>
-        ) : properties.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>暫無房源資料</p>
-            <p className="text-sm mt-1">點擊「新增房源」開始添加</p>
-          </div>
-        ) : (
-          properties.map((property) => (
-          <Card key={property.id} hover>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  {property.images && property.images.length > 0 ? (
-                    <img
-                      src={property.images[0]}
-                      alt={property.title}
-                      className="w-16 h-16 object-cover rounded-lg"
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=150&h=150&fit=crop&crop=center'
-                      }}
-                    />
-                  ) : (
-                    <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                      <span className="text-gray-400 text-xs">No Image</span>
-                    </div>
-                  )}
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{property.title}</h3>
-                    <p className="text-sm text-gray-600">{property.subtitle}</p>
-                    <div className="flex items-center space-x-4 mt-1">
-                      <Badge variant={property.status === 'active' ? 'success' : property.status === 'pending' ? 'default' : 'error'}>
-                        {property.status === 'active' ? '可用' : property.status === 'pending' ? '等待中' : '不可用'}
-                      </Badge>
-                      <span className="text-sm text-gray-500">
-                        {property.district}
-                      </span>
-                      <span className="text-sm font-medium text-gray-900">
-                        HK${property.price}/{property.unit}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {property.occupation} 入住
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditProperty(property)}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteProperty(property.id)}
-                    className="text-red-600 hover:text-red-700 hover:border-red-300"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          ))
-        )}
-      </div>
-
-      {/* Property Form Modal */}
-      <Modal
-        isOpen={isFormOpen}
-        onClose={() => {
-          setIsFormOpen(false)
-          setEditingProperty(null)
-        }}
-        title={editingProperty ? '編輯房源' : '新增房源'}
-      >
-        <PropertyForm
-          property={editingProperty}
-          onSave={handleSaveProperty}
-          onCancel={() => {
-            setIsFormOpen(false)
-            setEditingProperty(null)
-          }}
-        />
-      </Modal>
-    </div>
-  )
+  if (authLoading || !user || !isAdmin) return <main className="grid min-h-[60dvh] place-items-center"><LoaderCircle className="h-7 w-7 animate-spin text-blue-600" /></main>
+  return <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"><div className="flex flex-col justify-between gap-5 border-b border-slate-200 pb-6 sm:flex-row sm:items-end"><div><p className="text-sm font-medium text-blue-700">Labour Dorm</p><h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">房源管理</h1><p className="mt-2 text-sm text-slate-600">登入帳戶：{user.email}</p></div><div className="flex flex-wrap gap-2"><Link href={`/${locale}/`} target="_blank"><Button variant="outline"><ExternalLink className="mr-2 h-4 w-4" />預覽網站</Button></Link>{adminDataMode === 'local' && <Button variant="outline" onClick={resetLocalData}><RotateCcw className="mr-2 h-4 w-4" />重設本地資料</Button>}<Button variant="outline" onClick={logout}><LogOut className="mr-2 h-4 w-4" />登出</Button><Button variant="secondary" onClick={() => setEditing('new')} disabled={!adminWritesAvailable}><Plus className="mr-2 h-4 w-4" />新增房源</Button></div></div>
+    {adminDataMode === 'local' && <p role="status" className="mt-5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">本地測試資料模式：新增、編輯、下架及刪除只會儲存在這個瀏覽器，不會發布到網站，也不會改動正式 Firebase。</p>}
+    {adminDataMode === 'readonly' && <p role="status" className="mt-5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">目前顯示網站內的現有房源。尚未啟動本地測試資料庫，因此寫入功能暫時停用。</p>}
+    <section className="mt-6 grid gap-3 sm:grid-cols-4">{[['全部', stats.total, 'bg-slate-100 text-slate-950'], ['已發布', stats.published, 'bg-emerald-50 text-emerald-800'], ['草稿', stats.drafts, 'bg-amber-50 text-amber-800'], ['已封存', stats.archived, 'bg-slate-100 text-slate-700']].map(([label, value, style]) => <div key={String(label)} className={`rounded-2xl px-5 py-4 ${style}`}><p className="text-sm">{label}</p><p className="mt-1 text-2xl font-bold">{value}</p></div>)}</section>
+    <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex flex-col gap-3 sm:flex-row"><label className="relative flex-1"><span className="sr-only">搜尋房源</span><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} className="min-h-11 w-full rounded-xl border border-slate-300 py-2 pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-blue-600" placeholder="搜尋名稱、地址或 Property ID" /></label><select aria-label="地區" value={district} onChange={(event) => setDistrict(event.target.value)} className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm"><option value="all">全部地區</option>{getPropertyDistricts(status === 'published' ? properties.filter(isIndexableProperty) : properties).map((item) => <option key={item} value={item}>{item}</option>)}</select><select aria-label="房源範圍" value={status} onChange={(event) => { setStatus(event.target.value); setDistrict('all') }} className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm"><option value="published">公開房源</option><option value="all">全部資料</option><option value="active">已發布（包括未公開）</option><option value="pending">草稿</option><option value="inactive">已封存</option></select></div>
+      {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
+      <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[820px] text-left text-sm"><thead className="border-b border-slate-200 text-slate-500"><tr><th className="px-3 py-3 font-medium">房源</th><th className="px-3 py-3 font-medium">床位／性別</th><th className="px-3 py-3 font-medium">月租</th><th className="px-3 py-3 font-medium">狀態</th><th className="px-3 py-3 font-medium">操作</th></tr></thead><tbody>{loading ? <tr><td colSpan={5} className="px-3 py-10 text-center text-slate-500">載入中…</td></tr> : filtered.map((property) => <tr key={property.id} className="border-b border-slate-100"><td className="px-3 py-3"><div className="flex items-center gap-3">{property.images[0] ? <img src={property.images[0]} alt="" className="h-12 w-16 rounded-lg object-cover" /> : <div className="h-12 w-16 rounded-lg bg-slate-100" />}<div><p className="font-semibold text-slate-950">{property.title}</p><p className="text-slate-500">{property.property_id} · {property.district}</p></div></div></td><td className="px-3 py-3 text-slate-700">{property.availableBeds ?? '—'}／{property.totalBeds ?? property.details.guests} · {property.gender === 'male' ? '男' : property.gender === 'female' ? '女' : '不限'}</td><td className="px-3 py-3 font-medium text-slate-950">HK${property.price.toLocaleString()}</td><td className="px-3 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${property.status === 'active' ? 'bg-emerald-50 text-emerald-800' : property.status === 'pending' ? 'bg-amber-50 text-amber-800' : 'bg-slate-100 text-slate-700'}`}>{property.status === 'active' ? '已發布' : property.status === 'pending' ? '草稿' : '已封存'}</span></td><td className="px-3 py-3"><div className="flex gap-1"><button type="button" disabled={!adminWritesAvailable || togglingId === property.id} onClick={() => void togglePublished(property)} className={`grid h-11 min-w-11 place-items-center rounded-xl px-2 text-xs font-medium hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-35 ${property.status === 'active' ? 'text-emerald-700' : 'text-amber-700'}`} aria-label={`${property.status === 'active' ? '取消發布' : '發布'} ${property.title}`} title={property.status === 'active' ? '取消發布' : '發布'}>{property.status === 'active' ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}</button><button type="button" disabled={!adminWritesAvailable} onClick={() => setEditing(property)} className="grid h-11 w-11 place-items-center rounded-xl text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-35" aria-label={`編輯 ${property.title}`}><FilePenLine className="h-4 w-4" /></button><button type="button" disabled={!adminWritesAvailable} onClick={() => archive(property)} className="grid h-11 w-11 place-items-center rounded-xl text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-35" aria-label={`下架 ${property.title}`}><Archive className="h-4 w-4" /></button><button type="button" disabled={!adminWritesAvailable} onClick={() => setDeleteTarget(property)} className="grid h-11 w-11 place-items-center rounded-xl text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-35" aria-label={`永久刪除 ${property.title}`}><Trash2 className="h-4 w-4" /></button></div></td></tr>)}</tbody></table></div></section>
+    <Modal isOpen={editing !== null} onClose={() => setEditing(null)} title={editing === 'new' ? '新增房源' : '編輯房源'}>{editing !== null && <PropertyForm property={editing === 'new' ? null : editing} onSave={save} onCancel={() => setEditing(null)} />}</Modal>
+    <Modal isOpen={deleteTarget !== null} onClose={() => setDeleteTarget(null)} title="永久刪除房源"><div className="space-y-4"><p className="text-sm leading-6 text-slate-700">這會刪除「{deleteTarget?.title}」及其 Firebase Storage 圖片，無法復原。</p><label className="block text-sm font-medium text-slate-800">輸入 <span className="font-mono">{deleteTarget?.property_id}</span> 確認<input value={confirmText} onChange={(event) => setConfirmText(event.target.value)} className="mt-2 min-h-11 w-full rounded-xl border border-slate-300 px-3" /></label><div className="flex justify-end gap-3"><Button variant="outline" onClick={() => setDeleteTarget(null)}>取消</Button><button disabled={confirmText !== deleteTarget?.property_id} onClick={permanentlyDelete} className="min-h-11 rounded-xl bg-red-700 px-4 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-40">永久刪除</button></div></div></Modal>
+  </main>
 }

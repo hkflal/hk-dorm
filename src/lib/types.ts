@@ -54,6 +54,17 @@ export interface Property {
   }
   createdAt: string
   updatedAt: string
+  gender?: 'male' | 'female' | 'any'
+  totalBeds?: number
+  availableBeds?: number
+  deposit?: number
+  otherFees?: number
+  minStayMonths?: number
+  titleEn?: string
+  descriptionEn?: string
+  addressEn?: string
+  imageAlts?: string[]
+  publishedAt?: string
 }
 
 export interface Review {

@@ -17,6 +17,315 @@
 }
 
 @layer components {
+  .home-hero {
+    min-height: min(760px, calc(100svh - 7rem));
+  }
+
+  /* Adapted from Uiverse Galaxy gradient card by adamgiebl (MIT / Uiverse.io). */
+  .home-hero-blob {
+    position: absolute;
+    z-index: -5;
+    width: 22rem;
+    height: 22rem;
+    border-radius: 999px;
+    filter: blur(90px);
+    opacity: 0.28;
+    pointer-events: none;
+    animation: home-blob-float 9s ease-in-out infinite alternate;
+  }
+
+  .home-hero-blob--blue {
+    top: -9rem;
+    right: 12%;
+    background: #2563eb;
+  }
+
+  .home-hero-blob--yellow {
+    bottom: -12rem;
+    left: 5%;
+    background: #facc15;
+    animation-delay: -4s;
+  }
+
+  .home-hero-chip {
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.72);
+    padding: 0.55rem 0.85rem;
+  }
+
+  /* Search hierarchy adapted from Uiverse Galaxy input by chethan025 (MIT / Uiverse.io). */
+  .home-search-shell {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    border-radius: 1.75rem;
+    background: #fffdf8;
+    padding: 1.25rem;
+    color: #0f172a;
+    box-shadow: 0 30px 80px rgba(2, 6, 23, 0.38), 0 3px 0 rgba(250, 204, 21, 0.95);
+  }
+
+  .home-search-shell::before {
+    position: absolute;
+    top: 0;
+    left: 1.75rem;
+    width: 4.5rem;
+    height: 0.3rem;
+    border-radius: 0 0 999px 999px;
+    background: #2563eb;
+    content: '';
+  }
+
+  .home-filter {
+    display: flex;
+    min-height: 4.65rem;
+    align-items: center;
+    gap: 0.8rem;
+    border: 1px solid #dbe3ef;
+    border-radius: 1rem;
+    background: #ffffff;
+    padding: 0.65rem 0.85rem;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+    transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  }
+
+  .home-filter:hover {
+    border-color: #93c5fd;
+  }
+
+  .home-filter:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+    transform: translateY(-1px);
+  }
+
+  .home-filter__icon {
+    display: inline-flex;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.85rem;
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  .home-filter__icon > svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .home-filter__control {
+    display: block;
+  }
+
+  .home-filter__control > select,
+  .home-filter__control > input {
+    min-height: 2rem;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: #0f172a;
+    font-size: 0.95rem;
+    font-weight: 700;
+    outline: none;
+  }
+
+  /* Adapted from Uiverse Galaxy search button by vinodjangid07 (MIT / Uiverse.io). */
+  .home-search-primary {
+    display: flex;
+    width: 100%;
+    min-height: 3.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    border: 0;
+    border-radius: 1rem;
+    background: #2557d6;
+    padding: 0.8rem 1.15rem;
+    color: #ffffff;
+    font-weight: 800;
+    box-shadow: 0 13px 28px rgba(37, 87, 214, 0.26);
+    cursor: pointer;
+    transition: background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  }
+
+  .home-search-primary:hover {
+    background: #1e46b4;
+    box-shadow: 0 18px 34px rgba(37, 87, 214, 0.34);
+    transform: translateY(-2px);
+  }
+
+  .home-search-primary__icon {
+    transition: transform 450ms ease;
+  }
+
+  .home-search-primary:hover .home-search-primary__icon {
+    transform: rotate(-18deg) scale(1.08);
+  }
+
+  .home-search-primary:active {
+    transform: translateY(0) scale(0.99);
+  }
+
+  .home-search-primary:focus-visible,
+  .home-whatsapp-secondary:focus-visible,
+  .home-faq-toggle:focus-visible {
+    outline: 3px solid #60a5fa;
+    outline-offset: 3px;
+  }
+
+  .home-whatsapp-secondary {
+    display: inline-flex;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    align-self: flex-start;
+    border: 1px solid #a7f3d0;
+    border-radius: 999px;
+    background: #ecfdf5;
+    padding: 0.7rem 1rem;
+    color: #047857;
+    font-size: 0.875rem;
+    font-weight: 800;
+    transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+  }
+
+  .home-whatsapp-secondary:hover {
+    border-color: #34d399;
+    background: #d1fae5;
+    transform: translateY(-1px);
+  }
+
+  /* FAQ toggle adapted from Uiverse Galaxy checkbox by AKAspidey01 (MIT / Uiverse.io). */
+  .home-faq-item {
+    overflow: hidden;
+    border: 1px solid #dbe3ef;
+    border-radius: 1.15rem;
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.045);
+    transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  }
+
+  .home-faq-item:hover,
+  .home-faq-item--open {
+    border-color: #93c5fd;
+    box-shadow: 0 14px 32px rgba(37, 99, 235, 0.09);
+  }
+
+  .home-faq-toggle {
+    display: flex;
+    width: 100%;
+    min-height: 4rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border: 0;
+    background: transparent;
+    padding: 1rem 1.15rem;
+    color: #0f172a;
+    text-align: left;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .home-faq-toggle__icon {
+    position: relative;
+    width: 1.5rem;
+    height: 1.5rem;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: #eff6ff;
+  }
+
+  .home-faq-toggle__icon > span {
+    position: absolute;
+    top: calc(50% - 1px);
+    left: 0.42rem;
+    width: 0.68rem;
+    height: 2px;
+    border-radius: 999px;
+    background: #2563eb;
+    transition: transform 220ms ease;
+  }
+
+  .home-faq-toggle__icon > span:last-child {
+    transform: rotate(90deg);
+  }
+
+  .home-faq-toggle[aria-expanded='true'] .home-faq-toggle__icon > span:first-child {
+    transform: rotate(45deg);
+  }
+
+  .home-faq-toggle[aria-expanded='true'] .home-faq-toggle__icon > span:last-child {
+    transform: rotate(-45deg);
+  }
+
+  .home-faq-answer {
+    border-top: 1px solid #eef2f7;
+    padding: 1rem 1.15rem 1.25rem;
+    color: #475569;
+    line-height: 1.8;
+  }
+
+  /* Adapted from Uiverse Galaxy card by alexruix (MIT / Uiverse.io). */
+  .galaxy-card {
+    position: relative;
+    isolation: isolate;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  }
+
+  .galaxy-card::after {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), transparent 45%, rgba(16, 185, 129, 0.12));
+    content: '';
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 220ms ease;
+  }
+
+  .galaxy-card:hover {
+    border-color: rgba(37, 99, 235, 0.3);
+    box-shadow: 0 24px 56px rgba(15, 23, 42, 0.16);
+    transform: translateY(-6px);
+  }
+
+  .galaxy-card:hover::after,
+  .galaxy-card:focus-within::after {
+    opacity: 1;
+  }
+
+  /* Adapted from Uiverse Galaxy button by hssqrshi (MIT / Uiverse.io). */
+  .galaxy-cta {
+    background-image: linear-gradient(135deg, #059669, #0f766e);
+    box-shadow: 0 10px 24px rgba(5, 150, 105, 0.24);
+    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+  }
+
+  .galaxy-cta:hover {
+    box-shadow: 0 16px 32px rgba(5, 150, 105, 0.34);
+    filter: saturate(1.12);
+    transform: translateY(-2px);
+  }
+
+  .galaxy-cta:active {
+    transform: translateY(1px) scale(0.99);
+  }
+
+  .galaxy-cta:focus-visible,
+  .galaxy-card:focus-within {
+    outline: 3px solid rgba(96, 165, 250, 0.85);
+    outline-offset: 3px;
+  }
+
   .btn-primary {
     @apply bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-medium py-2 px-4 rounded-lg transition-colors;
   }
@@ -68,5 +377,41 @@
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes galaxy-drift {
+  from { background-position: 0 0; }
+  to { background-position: 48px 48px; }
+}
+
+@keyframes home-blob-float {
+  from { transform: translate3d(0, 0, 0) scale(0.95); }
+  to { transform: translate3d(1.5rem, -1rem, 0) scale(1.05); }
+}
+
+@media (max-width: 639px) {
+  .home-search-shell {
+    border-radius: 1.35rem;
+    padding: 1rem;
+  }
+
+  .home-whatsapp-secondary {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero-blob,
+  .home-filter,
+  .home-search-primary,
+  .home-search-primary__icon,
+  .home-whatsapp-secondary,
+  .home-faq-item,
+  .home-faq-toggle__icon > span,
+  .galaxy-card,
+  .galaxy-cta {
+    animation: none;
+    transition: none;
   }
 }

@@ -1,110 +1,13 @@
 'use client'
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { Menu, User } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Modal } from '@/components/ui/Modal'
+import { Menu, X } from 'lucide-react'
+import { LanguageToggle } from './LanguageToggle'
 
-interface HeaderProps {
-  locale?: string
-}
-
-export function Header({ locale = 'zh-hk' }: HeaderProps) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-
-  return (
-    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href={`/${locale}`} className="flex items-center space-x-2">
-            <div className="text-2xl font-bold text-blue-600">外勞宿舍</div>
-            <div className="text-lg text-gray-600 hidden sm:block">LABOUR DORM</div>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-8">
-            <Link href={`/${locale}`} className="text-gray-700 hover:text-blue-600 transition-colors">
-              首頁
-            </Link>
-            <Link href={`/${locale}/admin`} className="text-gray-700 hover:text-blue-600 transition-colors">
-              管理
-            </Link>
-            <Link href={`/${locale}/about`} className="text-gray-700 hover:text-blue-600 transition-colors">
-              關於我們
-            </Link>
-          </nav>
-
-          {/* Desktop Actions */}
-          <div className="hidden lg:flex items-center space-x-4">
-            
-            <Link href={`/${locale}/auth/login`}>
-              <Button
-                variant="outline"
-                size="sm"
-              >
-                <User className="h-5 w-5 mr-2" />
-                登入
-              </Button>
-            </Link>
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="lg:hidden">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsMenuOpen(true)}
-              className="text-gray-600"
-            >
-              <Menu className="h-6 w-6" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Menu Modal */}
-      <Modal isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} title="選單">
-        <div className="space-y-4">
-          <Link 
-            href={`/${locale}`} 
-            className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            首頁
-          </Link>
-          <Link 
-            href={`/${locale}/admin`} 
-            className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            管理
-          </Link>
-          <Link 
-            href={`/${locale}/about`} 
-            className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            關於我們
-          </Link>
-          
-          <div className="border-t pt-4 space-y-2">
-            
-            <Link href={`/${locale}/auth/login`}>
-              <Button
-                variant="primary"
-                className="w-full"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <User className="h-5 w-5 mr-2" />
-                登入
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </Modal>
-
-    </header>
-  )
+export function Header({ locale = 'zh-hk' }: { locale?: string }) {
+  const [open, setOpen] = useState(false)
+  const zh = locale === 'zh-hk'
+  const nav = [{ href: `/${locale}/`, label: zh ? '找宿舍' : 'Find a dorm' }, { href: `/${locale}/about/`, label: zh ? '平台資料' : 'About' }]
+  return <header className="sticky top-10 z-40 border-b border-slate-200 bg-white/95 backdrop-blur"><div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"><Link href={`/${locale}/`} className="flex min-h-11 items-center gap-2" aria-label={zh ? '外勞宿舍 Labour Dorm 首頁' : 'Labour Dorm home'}><span className="grid h-9 w-9 place-items-center rounded-xl bg-blue-700 text-sm font-bold text-white">LD</span><strong className="whitespace-nowrap text-lg font-extrabold tracking-tight text-slate-950 sm:text-xl">{zh ? '外勞宿舍 Labour Dorm' : 'Labour Dorm'}</strong></Link><nav className="hidden items-center gap-6 md:flex">{nav.map((item) => <Link key={item.href} className="min-h-11 px-1 py-3 text-sm font-medium text-slate-700 hover:text-blue-700" href={item.href}>{item.label}</Link>)}<LanguageToggle /></nav><div className="md:hidden"><button aria-expanded={open} aria-controls="mobile-navigation" onClick={() => setOpen(!open)} className="grid h-11 w-11 place-items-center rounded-xl text-slate-700 hover:bg-slate-100" aria-label={open ? (zh ? '關閉選單' : 'Close menu') : (zh ? '開啟選單' : 'Open menu')}>{open ? <X /> : <Menu />}</button></div></div>{open && <nav id="mobile-navigation" className="border-t border-slate-200 bg-white px-4 pb-4 md:hidden">{nav.map((item) => <Link onClick={() => setOpen(false)} key={item.href} className="block min-h-11 py-3 text-sm font-medium text-slate-700" href={item.href}>{item.label}</Link>)}<LanguageToggle /></nav>}</header>
 }

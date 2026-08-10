@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { cn } from "@/lib/utils";
 
 interface StickyBannerProps {
@@ -9,38 +9,16 @@ interface StickyBannerProps {
 }
 
 export const StickyBanner = ({ children, className }: StickyBannerProps) => {
-  const [scrollY, setScrollY] = useState(0);
-  const [isHidden, setIsHidden] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      setScrollY(currentScrollY);
-      
-      // Hide banner when scrolling down more than 100px
-      if (currentScrollY > 100) {
-        setIsHidden(true);
-      } else {
-        setIsHidden(false);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   return (
     <div
+      role="region"
+      aria-label="Promotion"
       className={cn(
-        "w-full transition-transform duration-300 ease-in-out z-40",
-        isHidden ? "-translate-y-full" : "translate-y-0",
+        "fixed inset-x-0 top-0 z-[100] h-10 w-full shadow-[0_1px_0_rgba(15,23,42,0.08)]",
         className
       )}
-      style={{
-        position: 'relative'
-      }}
     >
-      <div className="flex items-center justify-center px-4 py-3 text-center">
+      <div className="flex h-full items-center justify-center overflow-hidden px-3 text-center">
         {children}
       </div>
     </div>

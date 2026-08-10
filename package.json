@@ -6,14 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint src --max-warnings=0",
     "type-check": "tsc --noEmit",
     "export": "next build",
     "firebase:deploy": "npm run export && npx firebase deploy",
     "firebase:init": "npx firebase init",
     "deploy:test": "node deploy-test.js",
     "migrate-data": "ts-node --esm scripts/migrate-data.ts",
-    "upload-images": "node scripts/upload-images.js"
+    "upload-images": "node scripts/upload-images.js",
+    "test:site": "npm run build && node scripts/verify-static-output.mjs"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.7",

@@ -5,6 +5,7 @@ import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { PromotionBanner } from '@/components/layout/PromotionBanner'
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton'
+import { AuthProvider } from '@/contexts/AuthContext'
 import type { Metadata } from 'next'
 import { getLocaleMetadata, siteName, siteUrl } from '@/lib/seo'
 import '../globals.css'
@@ -23,14 +24,16 @@ export async function generateMetadata({
   const { locale } = await params
   const localized = getLocaleMetadata(locale)
   const localePath = locale === 'en' ? '/en/' : '/zh-hk/'
+  const title = localized.title || undefined
+  const description = localized.description || undefined
 
   return {
     metadataBase: new URL(siteUrl),
     title: {
-      default: localized.title as string,
+      default: title as string,
       template: `%s | ${siteName}`,
     },
-    description: localized.description,
+    description,
     keywords: localized.keywords,
     authors: [{ name: siteName }],
     alternates: {
@@ -41,18 +44,19 @@ export async function generateMetadata({
         'x-default': '/zh-hk/',
       },
     },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
     openGraph: {
-      title: localized.title,
-      description: localized.description,
+      title,
+      description,
       url: localePath,
       siteName,
       type: 'website',
       locale: locale === 'en' ? 'en_HK' : 'zh_HK',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: localized.title,
-      description: localized.description,
+      images: ['/images/hero-dorm.jpg'],
     },
   }
 }
@@ -74,22 +78,17 @@ export default async function LocaleLayout({
   
   return (
     <html lang={locale}>
-      <head>
-        <link 
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" 
-          rel="stylesheet" 
-        />
-      </head>
       <body className="font-sans">
-        <NextIntlClientProvider messages={messages}>
-          <PromotionBanner />
+        <AuthProvider><NextIntlClientProvider messages={messages}>
+          <PromotionBanner locale={locale} />
+          <div className="h-10" aria-hidden="true" />
           <Header locale={locale} />
           <main className="min-h-screen">
             {children}
           </main>
           <Footer locale={locale} />
-          <WhatsAppButton />
-        </NextIntlClientProvider>
+          <WhatsAppButton locale={locale} />
+        </NextIntlClientProvider></AuthProvider>
       </body>
     </html>
   )

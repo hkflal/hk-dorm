@@ -15,7 +15,7 @@ interface ModalProps {
 export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+      <Dialog as="div" className="relative z-[100]" onClose={onClose}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -25,7 +25,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
+          <div className="fixed inset-0 bg-slate-950/55" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -39,7 +39,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-3xl max-h-[calc(100dvh-2rem)] overflow-y-auto transform rounded-2xl bg-white p-5 sm:p-6 text-left align-middle shadow-xl transition-all">
                 <div className="flex items-center justify-between mb-4">
                   {title && (
                     <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
@@ -51,6 +51,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
                     size="sm"
                     onClick={onClose}
                     className="rounded-full p-2"
+                    aria-label="關閉視窗"
                   >
                     <X className="h-4 w-4" />
                   </Button>

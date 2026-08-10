@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { enhancedProperties } from '@/lib/enhanced-data'
 import { siteUrl, supportedLocales } from '@/lib/seo'
+import { isIndexableProperty } from '@/lib/property-visibility'
 
 export const dynamic = 'force-static'
 
@@ -19,13 +20,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
     },
     ...enhancedProperties
-      .filter((property) => property.status === 'active' && property.images.length > 0)
+      .filter(isIndexableProperty)
       .map((property) => ({
         url: `${siteUrl}/${locale}/property/${property.id}/`,
         lastModified: new Date(property.updatedAt),
         changeFrequency: 'weekly' as const,
         priority: 0.8,
       })),
+    ...[...new Set(enhancedProperties.filter(isIndexableProperty).map((property) => property.district))].map((district) => ({
+      url: `${siteUrl}/${locale}/district/${encodeURIComponent(district)}/`,
+      lastModified: new Date('2026-07-30'),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    })),
   ])
 
   return entries

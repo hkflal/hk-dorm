@@ -8,9 +8,9 @@ type SupportedLocale = (typeof supportedLocales)[number]
 
 const localizedMetadata: Record<SupportedLocale, Pick<Metadata, 'title' | 'description' | 'keywords'>> = {
   'zh-hk': {
-    title: '香港勞工宿舍 | Labour Dorm',
-    description: '尋找香港勞工宿舍及月租床位。瀏覽旺角等地區的住宿資料、設施和每月租金，直接透過 WhatsApp 查詢入住安排。',
-    keywords: ['香港勞工宿舍', '香港月租床位', '外勞宿舍', '旺角宿舍', '香港住宿'],
+    title: '香港外勞宿舍、勞工宿舍及員工宿舍月租 | Labour Dorm',
+    description: '尋找香港外勞宿舍、勞工宿舍及員工宿舍月租床位。按地區、住宿性別和入住日期查看現有房源，再確認租金及入住安排。',
+    keywords: ['香港外勞宿舍', '香港勞工宿舍', '香港員工宿舍', '外勞宿舍月租', '勞工宿舍床位', '員工宿舍月租'],
   },
   en: {
     title: 'Hong Kong Labour Dormitories | Labour Dorm',

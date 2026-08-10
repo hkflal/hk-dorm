@@ -1,476 +1,166 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Plus, X, Upload } from 'lucide-react'
+import { ChangeEvent, FormEvent, useMemo, useState } from 'react'
+import { GripVertical, ImagePlus, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Badge } from '@/components/ui/Badge'
 import { Property } from '@/lib/types'
+import { deletePropertyImage, uploadPropertyImage } from '@/lib/firebase-services'
 
-const propertySchema = z.object({
-  property_id: z.string().min(1, 'Property ID is required'),
-  type: z.string().min(1, 'Property type is required'),
-  title: z.string().min(1, 'Title is required'),
-  subtitle: z.string().optional(),
-  description: z.string().optional(),
-  address: z.string().min(1, 'Address is required'),
-  district: z.string().min(1, 'District is required'),
-  price: z.number().min(1, 'Price must be greater than 0'),
-  unit: z.string().min(1, 'Unit type is required'),
-  status: z.string().min(1, 'Status is required'),
-  available_at: z.string().min(1, 'Available date is required'),
-  occupation: z.string().min(1, 'Occupation is required'),
-  roomType: z.string().min(1, 'Room type is required'),
-  guests: z.number().min(1, 'Must accommodate at least 1 guest'),
-  bedrooms: z.number().min(0, 'Bedrooms cannot be negative'),
-  bathrooms: z.number().min(0, 'Bathrooms cannot be negative'),
-})
-
-type PropertyFormData = z.infer<typeof propertySchema>
+type FormValues = {
+  property_id: string; title: string; titleEn: string; description: string; descriptionEn: string
+  address: string; addressEn: string; district: string; price: string; deposit: string; otherFees: string
+  totalBeds: string; availableBeds: string; gender: 'male' | 'female' | 'any'; available_at: string
+  minStayMonths: string; status: 'active' | 'pending' | 'inactive'; amenities: string; nearbyMTR: string
+}
 
 interface PropertyFormProps {
   property?: Property | null
-  onSave: (data: Partial<Property>) => void
+  onSave: (data: Partial<Property>) => Promise<void>
   onCancel: () => void
 }
 
-const HONG_KONG_DISTRICTS = [
-  'Central', 'Admiralty', 'Wan Chai', 'Causeway Bay', 'North Point', 'Quarry Bay',
-  'Tai Koo', 'Shau Kei Wan', 'Chai Wan', 'Aberdeen', 'Wong Chuk Hang', 'Stanley',
-  'Repulse Bay', 'Tsim Sha Tsui', 'Yau Ma Tei', 'Mong Kok', 'Prince Edward',
-  'Sham Shui Po', 'Cheung Sha Wan', 'Lai Chi Kok', 'Mei Foo', 'Kowloon Tong',
-  'Wong Tai Sin', 'Diamond Hill', 'Choi Hung', 'Kowloon Bay', 'Ngau Tau Kok',
-  'Kwun Tong', 'Lam Tin', 'Yau Tong', 'Lei Yue Mun'
-]
-
-const AMENITIES_LIST = [
-  'wifi', 'kitchen', 'aircon', 'laundry', 'nearMTR', 'selfCheckin', 'parking', 'gym', 'pool', 'security'
-]
-
-const MTR_STATIONS = [
-  'Central', 'Admiralty', 'Wan Chai', 'Causeway Bay', 'Tin Hau', 'Fortress Hill',
-  'North Point', 'Quarry Bay', 'Tai Koo', 'Sai Wan Ho', 'Shau Kei Wan', 'Heng Fa Chuen',
-  'Chai Wan', 'Tsim Sha Tsui', 'Jordan', 'Yau Ma Tei', 'Mong Kok', 'Prince Edward',
-  'Sham Shui Po', 'Cheung Sha Wan', 'Lai Chi Kok', 'Mei Foo', 'Lai King', 'Kwai Fong',
-  'Kwai Hing', 'Tai Wo Hau', 'Tsuen Wan', 'Kowloon Tong', 'Lok Fu', 'Wong Tai Sin',
-  'Diamond Hill', 'Choi Hung', 'Kowloon Bay', 'Ngau Tau Kok', 'Kwun Tong', 'Lam Tin',
-  'Yau Tong', 'Tiu Keng Leng'
-]
+function initialValues(property?: Property | null): FormValues {
+  return {
+    property_id: property?.property_id || '', title: property?.title || '', titleEn: property?.titleEn || '',
+    description: property?.description || '', descriptionEn: property?.descriptionEn || '',
+    address: property?.address || '', addressEn: property?.addressEn || '', district: property?.district || '',
+    price: property?.price?.toString() || '', deposit: property?.deposit?.toString() || '', otherFees: property?.otherFees?.toString() || '',
+    totalBeds: property?.totalBeds?.toString() || property?.details.guests?.toString() || '',
+    availableBeds: property?.availableBeds?.toString() || '', gender: property?.gender || 'any',
+    available_at: property?.available_at === 'now' ? '' : property?.available_at || '',
+    minStayMonths: property?.minStayMonths?.toString() || '1', status: property?.status || 'pending',
+    amenities: property?.amenities.join(', ') || '', nearbyMTR: property?.location.nearbyMTR.join(', ') || '',
+  }
+}
 
 export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) {
-  const [images, setImages] = useState<string[]>(property?.images || [])
-  const [amenities, setAmenities] = useState<string[]>(property?.amenities || [])
-  const [nearbyMTR, setNearbyMTR] = useState<string[]>(property?.location?.nearbyMTR || [])
-  const [newImageUrl, setNewImageUrl] = useState('')
-  const [vrUrl, setVrUrl] = useState(property?.vr || '')
+  const [values, setValues] = useState(() => initialValues(property))
+  const [images, setImages] = useState(property?.images || [])
+  const [imageAlts, setImageAlts] = useState(property?.imageAlts || [])
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [dirty, setDirty] = useState(false)
+  const [imagesPendingDeletion, setImagesPendingDeletion] = useState<string[]>([])
+  const [newlyUploadedImages, setNewlyUploadedImages] = useState<string[]>([])
+  const draftKey = useMemo(() => values.property_id || property?.property_id || 'new-property', [values.property_id, property?.property_id])
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch
-  } = useForm<PropertyFormData>({
-    resolver: zodResolver(propertySchema),
-    defaultValues: {
-      property_id: property?.property_id || '',
-      type: property?.type || '勞工舍宿',
-      title: property?.title || '',
-      subtitle: property?.subtitle || '',
-      description: property?.description || '',
-      address: property?.address || '',
-      district: property?.district || '',
-      price: property?.price || 0,
-      unit: property?.unit || '床位',
-      status: property?.status || 'active',
-      available_at: property?.available_at || 'now',
-      occupation: property?.occupation || '0%',
-      roomType: property?.details?.roomType || 'shared room',
-      guests: property?.details?.guests || 1,
-      bedrooms: property?.details?.bedrooms || 0,
-      bathrooms: property?.details?.bathrooms || 0,
-    }
-  })
+  const update = (key: keyof FormValues, value: string) => {
+    setDirty(true)
+    setValues((current) => ({ ...current, [key]: value }))
+  }
 
-  const addImage = () => {
-    if (newImageUrl.trim()) {
-      setImages(prev => [...prev, newImageUrl.trim()])
-      setNewImageUrl('')
+  const uploadImages = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || [])
+    if (!files.length) return
+    setError('')
+    setUploading(true)
+    try {
+      const urls = await Promise.all(files.map((file) => uploadPropertyImage(file, draftKey)))
+      setImages((current) => [...current, ...urls])
+      setNewlyUploadedImages((current) => [...current, ...urls])
+      setImageAlts((current) => [...current, ...files.map((file) => file.name.replace(/\.[^.]+$/, ''))])
+      setDirty(true)
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : '圖片上載失敗，請重試。')
+    } finally {
+      event.target.value = ''
+      setUploading(false)
     }
   }
 
   const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index))
+    const url = images[index]
+    setImages((current) => current.filter((_, imageIndex) => imageIndex !== index))
+    setImageAlts((current) => current.filter((_, imageIndex) => imageIndex !== index))
+    if (property?.images.includes(url)) setImagesPendingDeletion((current) => [...current, url])
+    setDirty(true)
   }
 
-  const toggleAmenity = (amenity: string) => {
-    setAmenities(prev => 
-      prev.includes(amenity) 
-        ? prev.filter(a => a !== amenity)
-        : [...prev, amenity]
-    )
-  }
-
-  const toggleMTRStation = (station: string) => {
-    setNearbyMTR(prev => 
-      prev.includes(station) 
-        ? prev.filter(s => s !== station)
-        : [...prev, station]
-    )
-  }
-
-  const onSubmit = (data: PropertyFormData) => {
-    const propertyData: Partial<Property> = {
-      property_id: data.property_id,
-      type: data.type,
-      title: data.title,
-      subtitle: data.subtitle,
-      description: data.description,
-      address: data.address,
-      district: data.district,
-      price: data.price,
-      currency: 'HKD',
-      unit: data.unit,
-      status: data.status,
-      available_at: data.available_at,
-      occupation: data.occupation,
-      images: images,
-      vr: vrUrl,
-      rating: property?.rating || 4.0,
-      reviewCount: property?.reviewCount || 0,
-      location: {
-        district: data.district,
-        address: data.address,
-        nearbyMTR: nearbyMTR,
-        coordinates: property?.location?.coordinates || { lat: 22.2783, lng: 114.1747 }
-      },
-      details: {
-        guests: data.guests,
-        bedrooms: data.bedrooms,
-        bathrooms: data.bathrooms,
-        propertyType: data.type,
-        roomType: data.roomType
-      },
-      amenities: amenities,
-      host: property?.host || {
-        id: 'admin-host',
-        name: 'HKFLAL Admin',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-        isSuperhost: true,
-        responseTime: '1 hour'
-      },
-      availability: {
-        available: data.status === 'active',
-        minStay: 30,
-        maxStay: 365
-      },
-      policies: property?.policies || {
-        checkIn: '2:00 PM',
-        checkOut: '12:00 PM',
-        cancellation: 'Flexible'
-      }
+  const submit = async (event: FormEvent) => {
+    event.preventDefault()
+    setError('')
+    if (!values.property_id || !values.title || !values.address || !values.district || !values.price || !values.totalBeds) {
+      setError('請填寫 Property ID、中文名稱、地址、地區、月租及總床位。')
+      return
     }
-    
-    onSave(propertyData)
+    if (!images.length) {
+      setError('請最少上載一張房源圖片。')
+      return
+    }
+    setSaving(true)
+    try {
+      const totalBeds = Number(values.totalBeds)
+      const availableBeds = Number(values.availableBeds || totalBeds)
+      await onSave({
+        property_id: values.property_id, title: values.title, titleEn: values.titleEn || undefined,
+        description: values.description || undefined, descriptionEn: values.descriptionEn || undefined,
+        address: values.address, addressEn: values.addressEn || undefined, district: values.district,
+        price: Number(values.price), currency: 'HKD', unit: '床位', status: values.status,
+        available_at: values.available_at || 'now', occupation: totalBeds ? `${Math.max(0, Math.min(100, Math.round(((totalBeds - availableBeds) / totalBeds) * 100)))}%` : '0%',
+        images, imageAlts, gender: values.gender, totalBeds, availableBeds,
+        deposit: values.deposit ? Number(values.deposit) : undefined, otherFees: values.otherFees ? Number(values.otherFees) : undefined,
+        minStayMonths: Number(values.minStayMonths || 1),
+        location: { district: values.district, address: values.address, nearbyMTR: values.nearbyMTR.split(',').map((item) => item.trim()).filter(Boolean), coordinates: property?.location.coordinates || { lat: 22.3193, lng: 114.1694 } },
+        details: { guests: totalBeds, bedrooms: 0, bathrooms: property?.details.bathrooms || 1, propertyType: 'Worker dormitory', roomType: 'shared room' },
+        amenities: values.amenities.split(',').map((item) => item.trim()).filter(Boolean),
+        availability: { available: values.status === 'active' && availableBeds > 0, minStay: Number(values.minStayMonths || 1) * 30, maxStay: 365 },
+        policies: property?.policies || { checkIn: '', checkOut: '', cancellation: '' },
+        host: property?.host || { id: 'admin', name: 'Labour Dorm', avatar: '', isSuperhost: false, responseTime: '' },
+        rating: 0, reviewCount: 0,
+      })
+      await Promise.all(imagesPendingDeletion.map((url) => deletePropertyImage(url).catch(() => undefined)))
+      setImagesPendingDeletion([])
+      setNewlyUploadedImages([])
+      setDirty(false)
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : '儲存失敗，請重試。')
+    } finally { setSaving(false) }
   }
 
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-h-96 overflow-y-auto">
-      {/* Basic Information */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Basic Information</h3>
-        
-        <Input
-          label="Property ID"
-          {...register('property_id')}
-          error={errors.property_id?.message}
-          placeholder="e.g., dorm-001, student-001"
-        />
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Property Type
-          </label>
-          <select
-            {...register('type')}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-          >
-            <option value="勞工舍宿">勞工舍宿</option>
-            <option value="學生宿舍">學生宿舍</option>
-          </select>
-          {errors.type && (
-            <p className="mt-1 text-xs text-red-600">{errors.type.message}</p>
-          )}
-        </div>
-        
-        <Input
-          label="Property Title"
-          {...register('title')}
-          error={errors.title?.message}
-          placeholder="e.g., 西洋菜南街"
-        />
-        
-        <Input
-          label="Subtitle (Optional)"
-          {...register('subtitle')}
-          error={errors.subtitle?.message}
-          placeholder="e.g., 在旺角的勞工舍宿"
-        />
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Description (Optional)
-          </label>
-          <textarea
-            {...register('description')}
-            rows={3}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-            placeholder="Describe your property..."
-          />
-          {errors.description && (
-            <p className="mt-1 text-xs text-red-600">{errors.description.message}</p>
-          )}
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Price (HKD)"
-            type="number"
-            {...register('price', { valueAsNumber: true })}
-            error={errors.price?.message}
-            placeholder="3500"
-          />
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Unit Type
-            </label>
-            <select
-              {...register('unit')}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-            >
-              <option value="床位">床位</option>
-              <option value="套房">套房</option>
-            </select>
-            {errors.unit && (
-              <p className="mt-1 text-xs text-red-600">{errors.unit.message}</p>
-            )}
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <select
-              {...register('status')}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-            >
-              <option value="active">Active</option>
-              <option value="pending">Pending</option>
-              <option value="inactive">Inactive</option>
-            </select>
-            {errors.status && (
-              <p className="mt-1 text-xs text-red-600">{errors.status.message}</p>
-            )}
-          </div>
-          <Input
-            label="Available At"
-            {...register('available_at')}
-            error={errors.available_at?.message}
-            placeholder="now or date"
-          />
-          <Input
-            label="Occupation"
-            {...register('occupation')}
-            error={errors.occupation?.message}
-            placeholder="85%"
-          />
-        </div>
-      </div>
+  const leave = () => {
+    if (!dirty || window.confirm('有未儲存的變更，確定要離開嗎？')) {
+      void Promise.all(newlyUploadedImages.map((url) => deletePropertyImage(url).catch(() => undefined)))
+      onCancel()
+    }
+  }
 
-      {/* Location */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Location</h3>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            District
-          </label>
-          <select
-            {...register('district')}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-          >
-            <option value="">Select District</option>
-            {HONG_KONG_DISTRICTS.map(district => (
-              <option key={district} value={district}>{district}</option>
-            ))}
-          </select>
-          {errors.district && (
-            <p className="mt-1 text-xs text-red-600">{errors.district.message}</p>
-          )}
-        </div>
-        
-        <Input
-          label="Full Address"
-          {...register('address')}
-          error={errors.address?.message}
-          placeholder="e.g., 旺角西洋菜南街166號"
-        />
-      </div>
+  return <form onSubmit={submit} className="space-y-8" aria-describedby={error ? 'property-form-error' : undefined}>
+    {error && <p id="property-form-error" role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
+    <section className="grid gap-4 sm:grid-cols-2"><h3 className="sm:col-span-2 text-base font-semibold text-slate-900">基本資料</h3>
+      <Input id="property-id" label="Property ID *" value={values.property_id} onChange={(event) => update('property_id', event.target.value)} />
+      <Input id="district" label="地區 *" value={values.district} onChange={(event) => update('district', event.target.value)} placeholder="例如：旺角" />
+      <Input id="title" label="中文名稱 *" value={values.title} onChange={(event) => update('title', event.target.value)} />
+      <Input id="title-en" label="英文名稱" value={values.titleEn} onChange={(event) => update('titleEn', event.target.value)} />
+      <Input id="address" label="中文地址 *" className="sm:col-span-2" value={values.address} onChange={(event) => update('address', event.target.value)} />
+      <Input id="address-en" label="英文地址" className="sm:col-span-2" value={values.addressEn} onChange={(event) => update('addressEn', event.target.value)} />
+      <TextArea id="description" label="中文描述" value={values.description} onChange={(value) => update('description', value)} />
+      <TextArea id="description-en" label="英文描述" value={values.descriptionEn} onChange={(value) => update('descriptionEn', value)} />
+    </section>
+    <section className="grid gap-4 sm:grid-cols-2"><h3 className="sm:col-span-2 text-base font-semibold text-slate-900">租賃與床位</h3>
+      <Input id="price" type="number" min="0" label="每月租金（HK$）*" value={values.price} onChange={(event) => update('price', event.target.value)} />
+      <Input id="deposit" type="number" min="0" label="按金（HK$）" value={values.deposit} onChange={(event) => update('deposit', event.target.value)} />
+      <Input id="total-beds" type="number" min="1" label="總床位 *" value={values.totalBeds} onChange={(event) => update('totalBeds', event.target.value)} />
+      <Input id="available-beds" type="number" min="0" label="可用床位" value={values.availableBeds} onChange={(event) => update('availableBeds', event.target.value)} />
+      <Select id="gender" label="指定性別" value={values.gender} onChange={(value) => update('gender', value)} options={[['any', '不限'], ['male', '男士'], ['female', '女士']]} />
+      <Input id="available-at" type="date" label="最早入住日期（留空代表即日）" value={values.available_at} onChange={(event) => update('available_at', event.target.value)} />
+      <Input id="min-stay" type="number" min="1" label="最短租期（月）" value={values.minStayMonths} onChange={(event) => update('minStayMonths', event.target.value)} />
+      <Select id="status" label="發布狀態" value={values.status} onChange={(value) => update('status', value)} options={[['pending', '草稿'], ['active', '已發布'], ['inactive', '下架／封存']]} />
+      <Input id="mtr" label="附近港鐵站" className="sm:col-span-2" value={values.nearbyMTR} onChange={(event) => update('nearbyMTR', event.target.value)} placeholder="以逗號分隔，例如：Mong Kok, Prince Edward" />
+      <Input id="amenities" label="設施" className="sm:col-span-2" value={values.amenities} onChange={(event) => update('amenities', event.target.value)} placeholder="以逗號分隔，例如：wifi, aircon, laundry" />
+    </section>
+    <section><div className="mb-3 flex items-center justify-between gap-4"><div><h3 className="text-base font-semibold text-slate-900">圖片 *</h3><p className="mt-1 text-sm text-slate-600">JPG、PNG、WebP；每張最多 8MB。第一張會作為封面。</p></div><label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"><ImagePlus className="h-4 w-4" />{uploading ? '上載中…' : '加入圖片'}<input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={uploading} onChange={uploadImages} /></label></div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{images.map((image, index) => <div key={image} className="rounded-xl border border-slate-200 p-2"><img src={image} alt={imageAlts[index] || values.title || '房源圖片'} className="aspect-[4/3] w-full rounded-lg object-cover" /><div className="mt-2 flex items-center gap-1"><GripVertical className="h-4 w-4 text-slate-400" aria-hidden="true" /><input aria-label={`圖片 ${index + 1} alt text`} className="min-w-0 flex-1 rounded border border-slate-200 px-2 py-1 text-xs" value={imageAlts[index] || ''} onChange={(event) => { const next = [...imageAlts]; next[index] = event.target.value; setImageAlts(next); setDirty(true) }} placeholder="圖片描述" /><button type="button" onClick={() => removeImage(index)} aria-label={`刪除圖片 ${index + 1}`} className="grid h-9 w-9 place-items-center rounded-lg text-red-700 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button></div></div>)}</div>
+    </section>
+    <div className="sticky bottom-0 flex justify-end gap-3 border-t border-slate-200 bg-white py-4"><Button type="button" variant="outline" onClick={leave}>取消</Button><Button type="submit" variant="secondary" disabled={saving || uploading}>{saving ? '儲存中…' : '儲存房源'}</Button></div>
+  </form>
+}
 
-      {/* Property Details */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Property Details</h3>
-        
-        <div className="grid grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Room Type
-            </label>
-            <select
-              {...register('roomType')}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-            >
-              <option value="shared room">Shared Room</option>
-              <option value="private room">Private Room</option>
-            </select>
-            {errors.roomType && (
-              <p className="mt-1 text-xs text-red-600">{errors.roomType.message}</p>
-            )}
-          </div>
-          <Input
-            label="Guests"
-            type="number"
-            {...register('guests', { valueAsNumber: true })}
-            error={errors.guests?.message}
-            min={1}
-          />
-          <Input
-            label="Bedrooms"
-            type="number"
-            {...register('bedrooms', { valueAsNumber: true })}
-            error={errors.bedrooms?.message}
-            min={0}
-          />
-          <Input
-            label="Bathrooms"
-            type="number"
-            {...register('bathrooms', { valueAsNumber: true })}
-            error={errors.bathrooms?.message}
-            min={0}
-          />
-        </div>
-      </div>
+function TextArea({ id, label, value, onChange }: { id: string; label: string; value: string; onChange: (value: string) => void }) {
+  return <div><label htmlFor={id} className="mb-1 block text-sm font-medium text-slate-700">{label}</label><textarea id={id} rows={4} value={value} onChange={(event) => onChange(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm leading-6 outline-none focus:ring-2 focus:ring-blue-600" /></div>
+}
 
-      {/* Images */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Images</h3>
-        
-        <div className="flex space-x-2">
-          <Input
-            placeholder="Image URL (https://...)"
-            value={newImageUrl}
-            onChange={(e) => setNewImageUrl(e.target.value)}
-            className="flex-1"
-          />
-          <Button type="button" onClick={addImage} variant="outline">
-            <Plus className="w-4 h-4" />
-          </Button>
-        </div>
-        
-        <div className="grid grid-cols-3 gap-2">
-          {images.map((image, index) => (
-            <div key={index} className="relative">
-              <img
-                src={image}
-                alt={`Property ${index + 1}`}
-                className="w-full h-20 object-cover rounded-lg"
-              />
-              <button
-                type="button"
-                onClick={() => removeImage(index)}
-                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Amenities */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Amenities</h3>
-        <div className="grid grid-cols-3 gap-2">
-          {AMENITIES_LIST.map(amenity => (
-            <button
-              key={amenity}
-              type="button"
-              onClick={() => toggleAmenity(amenity)}
-              className={`p-2 text-sm rounded-lg border transition-colors ${
-                amenities.includes(amenity)
-                  ? 'bg-blue-100 border-blue-300 text-blue-700'
-                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              {amenity}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* VR Tour */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">VR Tour (Optional)</h3>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            VR Iframe Code
-          </label>
-          <textarea
-            value={vrUrl}
-            onChange={(e) => setVrUrl(e.target.value)}
-            rows={3}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-            placeholder='<iframe src="..." width="853" height="480" frameborder="0" allowfullscreen></iframe>'
-          />
-        </div>
-      </div>
-
-      {/* Nearby MTR */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Nearby MTR Stations</h3>
-        <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto">
-          {MTR_STATIONS.map(station => (
-            <button
-              key={station}
-              type="button"
-              onClick={() => toggleMTRStation(station)}
-              className={`p-1 text-xs rounded border transition-colors ${
-                nearbyMTR.includes(station)
-                  ? 'bg-green-100 border-green-300 text-green-700'
-                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              {station}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex space-x-3 pt-4 border-t">
-        <Button type="submit" variant="primary">
-          {property ? 'Update Property' : 'Add Property'}
-        </Button>
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-      </div>
-    </form>
-  )
+function Select({ id, label, value, onChange, options }: { id: string; label: string; value: string; onChange: (value: string) => void; options: [string, string][] }) {
+  return <div><label htmlFor={id} className="mb-1 block text-sm font-medium text-slate-700">{label}</label><select id={id} value={value} onChange={(event) => onChange(event.target.value)} className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-blue-600">{options.map(([optionValue, labelText]) => <option key={optionValue} value={optionValue}>{labelText}</option>)}</select></div>
 }

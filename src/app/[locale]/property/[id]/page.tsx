@@ -1,8 +1,6 @@
 import { notFound } from 'next/navigation'
-import Image from 'next/image'
 import { 
   MapPin, 
-  Star, 
   Users, 
   Bed, 
   Bath, 
@@ -20,6 +18,7 @@ import { BookingWidget } from '@/components/property/BookingWidget'
 import { GoogleMap } from '@/components/property/GoogleMap'
 import { Badge } from '@/components/ui/Badge'
 import { siteName, siteUrl } from '@/lib/seo'
+import { isIndexableProperty, propertyDisplayAddress, propertyDisplayName } from '@/lib/property-visibility'
 
 interface PropertyPageProps {
   params: Promise<{
@@ -30,7 +29,7 @@ interface PropertyPageProps {
 
 // Generate static params for all properties across locales
 export async function generateStaticParams() {
-  const properties = await getProperties()
+  const properties = (await getProperties()).filter(isIndexableProperty)
   const locales = ['en', 'zh-hk']
   
   return locales.flatMap(locale => 
@@ -54,12 +53,13 @@ export async function generateMetadata({ params }: PropertyPageProps) {
 
   const isEnglish = locale === 'en'
   const path = `/${isEnglish ? 'en' : 'zh-hk'}/property/${property.id}/`
+  const propertyName = propertyDisplayName(property, locale)
   const description = isEnglish
-    ? `${property.title} in ${property.location.district}, Hong Kong. View facilities, location and the monthly rate of HK$${property.price.toLocaleString('en-US')}.`
-    : `香港${property.location.district}${property.title}月租宿舍。查看設施、位置及每月 HK$${property.price.toLocaleString('en-US')} 的住宿資料。`
+    ? `${propertyName} in ${property.location.district}, Hong Kong. Check bed availability, facilities and the monthly rate of HK$${property.price.toLocaleString('en-US')}.`
+    : `香港${property.location.district}${propertyName}月租宿舍。查看床位、設施、位置及每月 HK$${property.price.toLocaleString('en-US')} 的住宿資料。`
 
   return {
-    title: property.title,
+    title: propertyName,
     description,
     alternates: {
       canonical: path,
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: PropertyPageProps) {
       },
     },
     openGraph: {
-      title: property.title,
+      title: propertyName,
       description,
       url: path,
       type: 'website',
@@ -87,13 +87,15 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
     notFound()
   }
 
+  if (!isIndexableProperty(property)) notFound()
+
   const propertyPath = `/${locale}/property/${property.id}/`
   const propertyUrl = `${siteUrl}${propertyPath}`
   const propertySchema = {
     '@context': 'https://schema.org',
     '@type': 'LodgingBusiness',
-    name: property.title,
-    description: property.description,
+    name: propertyDisplayName(property, locale),
+    description: locale === 'en' ? property.descriptionEn || property.description : property.description,
     url: propertyUrl,
     image: property.images.map((image) => new URL(image, siteUrl).toString()),
     priceRange: `HK$${property.price.toLocaleString('en-US')} / month`,
@@ -104,14 +106,9 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
       addressRegion: 'Hong Kong',
       addressCountry: 'HK',
     },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: property.rating,
-      reviewCount: property.reviewCount,
-    },
     amenityFeature: property.amenities.map((amenity) => ({
       '@type': 'LocationFeatureSpecification',
-      name: getAmenityName(amenity),
+      name: getAmenityName(amenity, locale),
       value: true,
     })),
     brand: {
@@ -125,7 +122,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: siteName, item: `${siteUrl}/${locale}/` },
-      { '@type': 'ListItem', position: 2, name: property.title, item: propertyUrl },
+      { '@type': 'ListItem', position: 2, name: propertyDisplayName(property, locale), item: propertyUrl },
     ],
   }
 
@@ -154,33 +151,19 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-2">
-          {property.title}
+          {propertyDisplayName(property, locale)}
         </h1>
         <div className="flex flex-wrap items-center gap-4 text-sm">
-          <div className="flex items-center">
-            <Star className="w-4 h-4 text-yellow-400 fill-current" />
-            <span className="font-medium ml-1">{property.rating}</span>
-            <span className="text-gray-500 ml-1">
-              ({property.reviewCount} 條評價)
-            </span>
-          </div>
-          
-          {property.host.isSuperhost && (
-            <Badge variant="info">
-              超讚房東
-            </Badge>
-          )}
-          
           <div className="flex items-center text-gray-600">
             <MapPin className="w-4 h-4 mr-1" />
-            <span className="underline">{property.location.address}</span>
+            <span className="underline">{propertyDisplayAddress(property, locale)}</span>
           </div>
         </div>
       </div>
 
       {/* Gallery */}
       <div className="mb-8">
-        <PropertyGallery images={property.images} title={property.title} />
+        <PropertyGallery images={property.images} title={propertyDisplayName(property, locale)} locale={locale} />
       </div>
 
       {/* Main Content */}
@@ -189,42 +172,22 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
         <div className="lg:col-span-2 space-y-8">
           {/* Property Info */}
           <div className="border-b border-gray-200 pb-8">
-            <h2 className="text-xl font-semibold mb-2">{property.subtitle}</h2>
+            <h2 className="text-xl font-semibold mb-2">{locale === 'en' ? 'Accommodation details' : '住宿資料'}</h2>
             <div className="flex items-center space-x-4 text-gray-600 mb-4">
               <div className="flex items-center">
                 <Users className="w-4 h-4 mr-1" />
-                <span>{property.details.guests} 位客人</span>
+                <span>{property.availableBeds == null ? (locale === 'en' ? 'Availability on enquiry' : '空缺請查詢確認') : `${property.availableBeds} ${locale === 'en' ? 'beds available' : '個可用床位'}`}</span>
               </div>
               <div className="flex items-center">
                 <Bed className="w-4 h-4 mr-1" />
-                <span>{property.details.bedrooms} 間睡房</span>
+                <span>{property.gender === 'male' ? (locale === 'en' ? 'Male only' : '男士') : property.gender === 'female' ? (locale === 'en' ? 'Female only' : '女士') : (locale === 'en' ? 'Any gender' : '不限性別')}</span>
               </div>
               <div className="flex items-center">
                 <Bath className="w-4 h-4 mr-1" />
-                <span>{property.details.bathrooms} 間浴室</span>
+                <span>{locale === 'en' ? `Minimum ${property.minStayMonths || 1} month` : `最短 ${property.minStayMonths || 1} 個月`}</span>
               </div>
             </div>
             
-            {/* Host Info */}
-            <div className="flex items-center space-x-3">
-              <Image
-                src={property.host.avatar || '/images/agents/dorm-agent-v2.jpg'}
-                alt={property.host.name}
-                width={40}
-                height={40}
-                priority
-                className="rounded-full object-cover"
-              />
-              <div>
-                <p className="font-medium">由 {property.host.name} 接待</p>
-                <p className="text-sm text-gray-600">
-                  {property.host.isSuperhost && (
-                    <span className="text-blue-600 font-medium">超讚房東 • </span>
-                  )}
-                  回覆時間: {property.host.responseTime}
-                </p>
-              </div>
-            </div>
           </div>
 
           {/* Key Features */}
@@ -237,10 +200,10 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                   </div>
                   <div>
                     <p className="font-medium">
-                      {getAmenityName(amenity)}
+                      {getAmenityName(amenity, locale)}
                     </p>
                     <p className="text-sm text-gray-600">
-                      非常適合您的入住
+                      {locale === 'en' ? 'Included at this property' : '房源提供'}
                     </p>
                   </div>
                 </div>
@@ -251,17 +214,17 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
           {/* Description */}
           <div className="border-b border-gray-200 pb-8">
             <h3 className="text-lg font-semibold mb-4">
-              房源描述
+              {locale === 'en' ? 'About this accommodation' : '房源描述'}
             </h3>
             <p className="text-gray-700 leading-relaxed">
-              {property.description}
+              {locale === 'en' ? property.descriptionEn || property.description : property.description}
             </p>
           </div>
 
           {/* Amenities */}
           <div className="border-b border-gray-200 pb-8">
             <h3 className="text-lg font-semibold mb-4">
-              設施與服務
+              {locale === 'en' ? 'Amenities' : '設施與服務'}
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {property.amenities.map((amenity) => (
@@ -270,7 +233,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                     {amenityIcons[amenity] || <Shield className="w-4 h-4" />}
                   </div>
                   <span>
-                    {getAmenityName(amenity)}
+                    {getAmenityName(amenity, locale)}
                   </span>
                 </div>
               ))}
@@ -283,7 +246,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
               <div className="flex items-center space-x-2 mb-4">
                 <Camera className="w-5 h-5 text-blue-600" />
                 <h3 className="text-lg font-semibold">
-                  虛擬實景
+                  {locale === 'en' ? 'Virtual tour' : '虛擬實景'}
                 </h3>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                   360°
@@ -296,9 +259,8 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                   dangerouslySetInnerHTML={{ __html: property.vr }}
                 />
               </div>
-              <p className="text-sm text-gray-600 mt-2 flex items-center space-x-1">
-                <span>💡</span>
-                <span>使用滑鼠拖拽或觸摸螢幕來環顧四周，體驗360°虛擬實景</span>
+              <p className="mt-2 text-sm text-gray-600">
+                {locale === 'en' ? 'Drag with a mouse or touch screen to look around the 360° tour.' : '可使用滑鼠拖拽或觸摸螢幕環顧四周，體驗 360° 虛擬實景。'}
               </p>
             </div>
           )}
@@ -306,16 +268,16 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
           {/* Location */}
           <div>
             <h3 className="text-lg font-semibold mb-4">
-              位置資訊
+              {locale === 'en' ? 'Location' : '位置資訊'}
             </h3>
             <GoogleMap
               address={property.location.address}
-              title={property.title}
+              title={propertyDisplayName(property, locale)}
               coordinates={property.location.coordinates}
               nearbyMTR={property.location.nearbyMTR}
             />
             <div className="mt-4 space-y-2">
-              <h4 className="font-medium">附近港鐵站:</h4>
+              <h4 className="font-medium">{locale === 'en' ? 'Nearby MTR stations:' : '附近港鐵站：'}</h4>
               <div className="flex flex-wrap gap-2">
                 {property.location.nearbyMTR.map((station) => (
                   <Badge key={station} variant="default">
@@ -329,25 +291,26 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
 
         {/* Right Column - Booking Widget */}
         <div className="lg:col-span-1">
-          <BookingWidget property={property} />
+          <BookingWidget property={property} locale={locale} />
         </div>
       </div>
     </div>
   )
 }
 
-function getAmenityName(amenity: string): string {
-  const amenityNames: Record<string, string> = {
-    wifi: 'WiFi 無線網絡',
-    kitchen: '廚房',
-    parking: '停車位',
-    pool: '游泳池',
-    aircon: '空調',
-    laundry: '洗衣設施',
-    nearMTR: '鄰近港鐵',
-    selfCheckin: '自助入住',
-    vrTour: '虛擬實景'
+function getAmenityName(amenity: string, locale: string): string {
+  const amenityNames: Record<string, [string, string]> = {
+    wifi: ['WiFi 無線網絡', 'WiFi'],
+    kitchen: ['廚房', 'Kitchen'],
+    parking: ['停車位', 'Parking'],
+    pool: ['游泳池', 'Swimming pool'],
+    aircon: ['空調', 'Air conditioning'],
+    laundry: ['洗衣設施', 'Laundry'],
+    nearMTR: ['鄰近港鐵', 'Near MTR'],
+    selfCheckin: ['自助入住', 'Self check-in'],
+    vrTour: ['虛擬實景', 'Virtual tour']
   }
   
-  return amenityNames[amenity] || amenity
+  const translated = amenityNames[amenity]
+  return translated ? translated[locale === 'en' ? 1 : 0] : amenity
 }

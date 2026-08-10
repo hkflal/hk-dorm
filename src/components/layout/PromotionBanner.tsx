@@ -1,35 +1,30 @@
-"use client";
+import { StickyBanner } from '@/components/ui/sticky-banner'
 
-import React from "react";
-import { StickyBanner } from "@/components/ui/sticky-banner";
-import Link from "next/link";
-
-export function PromotionBanner() {
-  // Get current month in Chinese
-  const getCurrentMonthInChinese = () => {
-    const currentMonth = new Date().getMonth() + 1; // getMonth() returns 0-11, so add 1
-    const chineseMonths = [
-      '一', '二', '三', '四', '五', '六',
-      '七', '八', '九', '十', '十一', '十二'
-    ];
-    return chineseMonths[currentMonth - 1];
-  };
-
-  const currentMonth = getCurrentMonthInChinese();
+export function PromotionBanner({ locale }: { locale: string }) {
+  const zh = locale === 'zh-hk'
+  const monthIndex = new Date().getMonth()
+  const month = zh
+    ? ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'][monthIndex]
+    : new Intl.DateTimeFormat('en', { month: 'long' }).format(new Date())
 
   return (
-    <StickyBanner className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-red-600">
-      <p className="mx-0 max-w-[95%] text-red-600 drop-shadow-sm font-medium text-sm md:text-base">
-        🎉 {currentMonth}月優惠，雇主直租港九勞工宿舍床位港幣$2,800 起！{" "}
-        <a 
-          href="https://wa.me/85244130760?text=你好！我想了解更多關於宿舍的資訊。" 
-          target="_blank" 
+    <StickyBanner className="bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-400 text-red-800">
+      <p className="flex max-w-full items-center justify-center gap-1.5 whitespace-nowrap text-xs font-semibold drop-shadow-sm sm:gap-2 sm:text-sm">
+        <span className="sm:hidden">{zh ? `${month}床位低至` : `${month} beds from`}</span>
+        <span className="hidden sm:inline">
+          {zh ? `${month}僱主直租勞工宿舍床位，月租低至` : `${month} worker dormitory beds from`}
+        </span>
+        <strong className="text-base font-extrabold tracking-tight text-red-900 sm:text-lg">HK$2,800</strong>
+        <span className="hidden sm:inline">{zh ? '／月' : '/month'}</span>
+        <a
+          href="https://wa.me/85244130760"
+          target="_blank"
           rel="noopener noreferrer"
-          className="transition duration-200 hover:underline font-semibold ml-2 text-red-700 hover:text-red-800"
+          className="inline-flex min-h-9 items-center rounded-md px-1 font-bold text-red-900 underline-offset-2 transition-colors hover:text-red-700 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-red-900"
         >
-          立即訂位 →
+          {zh ? '立即查詢 →' : 'Enquire →'}
         </a>
       </p>
     </StickyBanner>
-  );
+  )
 }

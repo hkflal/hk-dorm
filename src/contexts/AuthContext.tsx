@@ -1,0 +1,76 @@
+'use client'
+
+import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react'
+import {
+  createUserWithEmailAndPassword,
+  User,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signOut,
+} from 'firebase/auth'
+import { FirebaseError } from 'firebase/app'
+import { auth } from '@/lib/firebase'
+
+const adminEmail = 'arrivals@hkflal.com'
+const usingFirebaseEmulators = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === 'true'
+  || process.env.NEXT_PUBLIC_USE_FIREBASE_AUTH_EMULATOR === 'true'
+
+type AuthState = {
+  user: User | null
+  isAdmin: boolean
+  loading: boolean
+  signIn: (email: string, password: string) => Promise<void>
+  sendPasswordReset: (email: string) => Promise<void>
+  signOutUser: () => Promise<void>
+}
+
+const AuthContext = createContext<AuthState | undefined>(undefined)
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => onAuthStateChanged(auth, async (nextUser) => {
+    setUser(nextUser)
+    if (!nextUser) {
+      setIsAdmin(false)
+      setLoading(false)
+      return
+    }
+    const token = await nextUser.getIdTokenResult(true)
+    setIsAdmin(token.claims.admin === true || nextUser.email === adminEmail)
+    setLoading(false)
+  }), [])
+
+  const value = useMemo(() => ({
+    user,
+    isAdmin,
+    loading,
+    signIn: async (email: string, password: string) => {
+      const normalizedEmail = email.trim().toLowerCase()
+      try {
+        await signInWithEmailAndPassword(auth, normalizedEmail, password)
+      } catch (error) {
+        const mayCreateLocalAdmin = usingFirebaseEmulators
+          && normalizedEmail === adminEmail
+          && error instanceof FirebaseError
+          && ['auth/user-not-found', 'auth/invalid-credential'].includes(error.code)
+
+        if (!mayCreateLocalAdmin) throw error
+        await createUserWithEmailAndPassword(auth, normalizedEmail, password)
+      }
+    },
+    sendPasswordReset: async (email: string) => sendPasswordResetEmail(auth, email),
+    signOutUser: async () => signOut(auth),
+  }), [user, isAdmin, loading])
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (!context) throw new Error('useAuth must be used inside AuthProvider')
+  return context
+}

@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/Button'
 interface PropertyGalleryProps {
   images: string[]
   title: string
+  locale?: string
 }
 
-export function PropertyGallery({ images, title }: PropertyGalleryProps) {
+export function PropertyGallery({ images, title, locale = 'zh-hk' }: PropertyGalleryProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [zoom, setZoom] = useState(1)
@@ -112,16 +113,18 @@ export function PropertyGallery({ images, title }: PropertyGalleryProps) {
   return (
     <>
       {/* Gallery Grid */}
-      <div className="grid grid-cols-4 grid-rows-2 gap-2 h-96 rounded-xl overflow-hidden">
+      <div className="grid h-72 grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-xl sm:h-96">
         {/* Main Image */}
-        <div 
-          className="col-span-2 row-span-2 relative cursor-pointer group"
+        <button
+          type="button"
+          className="group relative col-span-4 row-span-2 cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:col-span-2"
           onClick={() => {
             if (hasImages) {
               setCurrentImageIndex(0)
               setIsModalOpen(true)
             }
           }}
+          aria-label={`View all photos of ${title}`}
         >
           <Image
             src={displayImages[0]}
@@ -131,17 +134,19 @@ export function PropertyGallery({ images, title }: PropertyGalleryProps) {
             sizes="(max-width: 768px) 100vw, 50vw"
             priority
           />
-        </div>
+        </button>
 
         {/* Secondary Images */}
         {hasImages && images.slice(1, 5).map((image, index) => (
-          <div 
+          <button
+            type="button"
             key={index} 
-            className="relative cursor-pointer group"
+            className="group relative hidden cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
             onClick={() => {
               setCurrentImageIndex(index + 1)
               setIsModalOpen(true)
             }}
+            aria-label={`View photo ${index + 2} of ${title}`}
           >
             <Image
               src={image || '/images/placeholder-dorm.jpg'}
@@ -159,7 +164,7 @@ export function PropertyGallery({ images, title }: PropertyGalleryProps) {
                 </span>
               </div>
             )}
-          </div>
+          </button>
         ))}
       </div>
 
@@ -173,7 +178,7 @@ export function PropertyGallery({ images, title }: PropertyGalleryProps) {
           }}
           className="text-gray-700 border-gray-300"
         >
-          顯示所有相片 ({displayImages.length})
+          {locale === 'en' ? 'Show all photos' : '顯示所有相片'} ({displayImages.length})
         </Button>
       </div>
 
