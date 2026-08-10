@@ -9,6 +9,8 @@ This plan covers the Labour Dorm homepage changes requested on 2026-07-31:
 3. Make the Hero primary action perform an on-page property search/filter, with WhatsApp as a secondary follow-up action.
 4. Restore property results when Firebase is unavailable, empty, or not configured during local development.
 5. Restore the old promotional banner format with the current Chinese month and an emphasized `HK$2,800` price.
+6. Install the approved Google Ads tag `AW-11323045023` once across each
+   localized page.
 
 ## Development safety
 
@@ -65,6 +67,16 @@ This plan covers the Labour Dorm homepage changes requested on 2026-07-31:
 - Banner remains fixed at the top while scrolling and does not cover the Header.
 - English banner has equivalent meaning without Chinese UI leakage.
 
+### Google Ads tag
+
+- Each localized page includes one `gtag.js` loader for `AW-11323045023`.
+- Each localized page includes one matching `gtag('config', 'AW-11323045023')`
+  initialization.
+- The tag is attached through the shared locale layout, so public pages and
+  localized admin/auth pages do not need duplicated snippets.
+- The tag is not duplicated during client navigation or by separate page
+  components.
+
 ## Automated checks
 
 Run:
@@ -81,6 +93,8 @@ Static-output verification must additionally check:
 - `搜尋房源` / `Search listings`;
 - at least one property card in both localized homepage outputs;
 - promotional `HK$2,800`;
+- exactly one Google Ads loader and one matching Google Ads config per
+  localized homepage;
 - every sitemap URL maps to a generated page.
 
 ## Visual and interaction checks

@@ -39,6 +39,13 @@ for (const locale of ['en', 'zh-hk']) {
   if (!html.includes(expectations[locale].search)) throw new Error(`Missing primary search action on /${locale}/`)
   if (!html.includes('HK$2,800')) throw new Error(`Missing promotional price on /${locale}/`)
   if (!html.includes(expectations[locale].month)) throw new Error(`Missing current promotion month on /${locale}/`)
+  // Next serializes the Script props in its flight payload and emits a
+  // preload link; count the actual preload rather than duplicated serialized
+  // URL text.
+  const googleTagLoaderCount = [...html.matchAll(/<link rel="preload" href="https:\/\/www\.googletagmanager\.com\/gtag\/js\?id=AW-11323045023" as="script"\s*\/>/g)].length
+  if (googleTagLoaderCount !== 1) throw new Error(`Expected one Google Ads loader preload on /${locale}/; found ${googleTagLoaderCount}`)
+  const googleTagConfigCount = [...html.matchAll(/gtag\('config', 'AW-11323045023'\)/g)].length
+  if (googleTagConfigCount !== 1) throw new Error(`Expected one Google Ads config on /${locale}/; found ${googleTagConfigCount}`)
   for (const district of allHongKongDistricts) {
     if (!html.includes(`>${district}</option>`)) throw new Error(`Missing district filter option ${district} on /${locale}/`)
   }
