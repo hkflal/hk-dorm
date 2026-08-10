@@ -6,6 +6,7 @@ import { ArrowRight, MapPin, MessageCircle, Search, Users } from 'lucide-react'
 import { HomeFaq } from '@/components/content/HomeFaq'
 import { HeroTitle } from '@/components/layout/HeroTitle'
 import { PropertyGrid } from '@/components/property/PropertyGrid'
+import { TrackedWhatsAppLink } from '@/components/ui/TrackedWhatsAppLink'
 import { getPublicProperties } from '@/lib/firebase-services'
 import { Property } from '@/lib/types'
 import { getPropertyDistricts } from '@/lib/property-visibility'
@@ -109,10 +110,10 @@ export default function HomePageClient({ locale = 'zh-hk', initialProperties }: 
             <h2 id="listings-title" tabIndex={-1} className="mt-2 text-3xl font-bold tracking-tight text-slate-950 outline-none sm:text-4xl">{zh ? '可查詢的月租床位' : 'Monthly beds to enquire about'}</h2>
             <p className="mt-3 text-slate-600" aria-live="polite">{zh ? `${properties.length} 個房源符合目前篩選。` : `${properties.length} listings match your filters.`}</p>
           </div>
-          <a href={`https://wa.me/85244130760?text=${query}`} target="_blank" rel="noopener noreferrer" className="home-whatsapp-secondary">
+          <TrackedWhatsAppLink href={`https://wa.me/85244130760?text=${query}`} className="home-whatsapp-secondary">
             <MessageCircle className="h-5 w-5" aria-hidden="true" />
             <span>{zh ? '找不到合適房源？WhatsApp 查詢' : 'Need another option? Ask on WhatsApp'}</span>
-          </a>
+          </TrackedWhatsAppLink>
         </div>
         <PropertyGrid properties={properties} locale={locale} />
       </div>

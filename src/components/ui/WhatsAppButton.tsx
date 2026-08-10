@@ -1,6 +1,7 @@
 'use client'
 
 import { MessageCircle } from 'lucide-react'
+import { reportGoogleAdsConversion } from '@/lib/google-ads'
 
 interface WhatsAppButtonProps {
   phoneNumber?: string
@@ -18,12 +19,14 @@ export function WhatsAppButton({
   const handleWhatsAppClick = () => {
     const encodedMessage = encodeURIComponent(message || defaultMessage)
     const whatsappUrl = `https://wa.me/${phoneNumber.replace(/[^0-9]/g, '')}?text=${encodedMessage}`
+    reportGoogleAdsConversion()
     window.open(whatsappUrl, '_blank')
   }
 
   return (
     <button
       onClick={handleWhatsAppClick}
+      data-google-ads-conversion="whatsapp"
       className="galaxy-cta fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full px-4 py-3 text-white transition-all duration-300 group"
       aria-label={locale === 'en' ? 'Enquire on WhatsApp' : 'WhatsApp 即時查詢'}
     >

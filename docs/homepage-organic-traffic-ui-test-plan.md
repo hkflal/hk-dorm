@@ -11,6 +11,7 @@ This plan covers the Labour Dorm homepage changes requested on 2026-07-31:
 5. Restore the old promotional banner format with the current Chinese month and an emphasized `HK$2,800` price.
 6. Install the approved Google Ads tag `AW-11323045023` once across each
    localized page.
+7. Track conversion events for every WhatsApp contact entry.
 
 ## Development safety
 
@@ -77,6 +78,17 @@ This plan covers the Labour Dorm homepage changes requested on 2026-07-31:
 - The tag is not duplicated during client navigation or by separate page
   components.
 
+### WhatsApp conversion tracking
+
+- The fixed WhatsApp button, promotion banner, homepage enquiry link, footer
+  link, about-page link and property booking link all carry the shared
+  conversion handler.
+- A WhatsApp click sends one conversion event to
+  `AW-11323045023/CKNSCKD65eoYEJ_pn5cq` when `gtag` is available.
+- If the analytics script is blocked or unavailable, the original WhatsApp
+  navigation still works.
+- Conversion tracking does not prevent opening WhatsApp in a new tab.
+
 ## Automated checks
 
 Run:
@@ -95,6 +107,8 @@ Static-output verification must additionally check:
 - promotional `HK$2,800`;
 - exactly one Google Ads loader and one matching Google Ads config per
   localized homepage;
+- homepage contains conversion markers for all four visible WhatsApp entry
+  points and the client bundle contains the approved conversion destination;
 - every sitemap URL maps to a generated page.
 
 ## Visual and interaction checks

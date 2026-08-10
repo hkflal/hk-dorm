@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const output = resolve('out')
@@ -11,6 +11,19 @@ if (!urls.length) throw new Error('Sitemap contains no Labour Dorm URLs')
 
 const missing = urls.filter((url) => !existsSync(resolve(output, `.${decodeURIComponent(url)}`, 'index.html')))
 if (missing.length) throw new Error(`Sitemap points to missing static pages: ${missing.join(', ')}`)
+
+function javascriptFiles(directory) {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = resolve(directory, entry.name)
+    if (entry.isDirectory()) return javascriptFiles(path)
+    return entry.name.endsWith('.js') ? [path] : []
+  })
+}
+
+const javascriptBundle = javascriptFiles(resolve(output, '_next')).map((path) => readFileSync(path, 'utf8')).join('\n')
+if (!javascriptBundle.includes('AW-11323045023/CKNSCKD65eoYEJ_pn5cq')) {
+  throw new Error('Missing approved WhatsApp Google Ads conversion destination in the client bundle')
+}
 
 const expectations = {
   en: {
@@ -46,6 +59,8 @@ for (const locale of ['en', 'zh-hk']) {
   if (googleTagLoaderCount !== 1) throw new Error(`Expected one Google Ads loader preload on /${locale}/; found ${googleTagLoaderCount}`)
   const googleTagConfigCount = [...html.matchAll(/gtag\('config', 'AW-11323045023'\)/g)].length
   if (googleTagConfigCount !== 1) throw new Error(`Expected one Google Ads config on /${locale}/; found ${googleTagConfigCount}`)
+  const whatsappConversionMarkers = [...html.matchAll(/data-google-ads-conversion="whatsapp"/g)].length
+  if (whatsappConversionMarkers < 4) throw new Error(`Expected at least four tracked WhatsApp entry points on /${locale}/; found ${whatsappConversionMarkers}`)
   for (const district of allHongKongDistricts) {
     if (!html.includes(`>${district}</option>`)) throw new Error(`Missing district filter option ${district} on /${locale}/`)
   }

@@ -1,4 +1,5 @@
 import { StickyBanner } from '@/components/ui/sticky-banner'
+import { TrackedWhatsAppLink } from '@/components/ui/TrackedWhatsAppLink'
 
 export function PromotionBanner({ locale }: { locale: string }) {
   const zh = locale === 'zh-hk'
@@ -16,14 +17,12 @@ export function PromotionBanner({ locale }: { locale: string }) {
         </span>
         <strong className="text-base font-extrabold tracking-tight text-red-900 sm:text-lg">HK$2,800</strong>
         <span className="hidden sm:inline">{zh ? '／月' : '/month'}</span>
-        <a
+        <TrackedWhatsAppLink
           href="https://wa.me/85244130760"
-          target="_blank"
-          rel="noopener noreferrer"
           className="inline-flex min-h-9 items-center rounded-md px-1 font-bold text-red-900 underline-offset-2 transition-colors hover:text-red-700 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-red-900"
         >
           {zh ? '立即查詢 →' : 'Enquire →'}
-        </a>
+        </TrackedWhatsAppLink>
       </p>
     </StickyBanner>
   )
