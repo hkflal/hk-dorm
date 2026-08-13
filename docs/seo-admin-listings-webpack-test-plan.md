@@ -145,6 +145,8 @@ database created, sign in with an approved admin account and open
    exception.
 5. A missing or unreachable database leaves the loading state within the
    configured read timeout and does not remain stuck indefinitely.
+6. If Firebase Auth does not resolve an initial session, the route leaves its
+   loading shell within the configured auth timeout and returns to login.
 
 This check is read-only and must not create the Firestore database or write any
 production document.

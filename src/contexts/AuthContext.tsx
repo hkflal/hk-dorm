@@ -13,6 +13,8 @@ import { FirebaseError } from 'firebase/app'
 import { auth } from '@/lib/firebase'
 
 const adminEmails = new Set(['arrivals@hkflal.com', 'hkdl902@gmail.com'])
+const authInitializationTimeoutMs = 8000
+const authTokenTimeoutMs = 5000
 const usingFirebaseEmulators = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === 'true'
   || process.env.NEXT_PUBLIC_USE_FIREBASE_AUTH_EMULATOR === 'true'
 
@@ -31,6 +33,18 @@ function isAdminEmail(email: string | null | undefined) {
   return Boolean(email && adminEmails.has(email.trim().toLowerCase()))
 }
 
+async function hasAdminClaim(nextUser: User) {
+  try {
+    const token = await Promise.race([
+      nextUser.getIdTokenResult(true),
+      new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error('Auth token refresh timed out.')), authTokenTimeoutMs)),
+    ])
+    return token.claims.admin === true
+  } catch {
+    return false
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -38,7 +52,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let requestId = 0
+    const initializationTimeout = window.setTimeout(() => {
+      if (requestId !== 0) return
+      requestId += 1
+      setUser(null)
+      setIsAdmin(false)
+      setLoading(false)
+    }, authInitializationTimeoutMs)
     const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+      window.clearTimeout(initializationTimeout)
       const currentRequestId = ++requestId
       setUser(nextUser)
       if (!nextUser) {
@@ -48,21 +70,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       void (async () => {
-        let hasAdminClaim = false
-        try {
-          const token = await nextUser.getIdTokenResult(true)
-          hasAdminClaim = token.claims.admin === true
-        } catch {
-          // Approved admin emails can still be resolved when a token refresh
-          // is temporarily unavailable. The next auth event retries claims.
-        }
+        const tokenHasAdminClaim = await hasAdminClaim(nextUser)
         if (currentRequestId !== requestId) return
-        setIsAdmin(hasAdminClaim || isAdminEmail(nextUser.email))
+        setIsAdmin(tokenHasAdminClaim || isAdminEmail(nextUser.email))
         setLoading(false)
       })()
     })
 
-    return () => unsubscribe()
+    return () => {
+      window.clearTimeout(initializationTimeout)
+      unsubscribe()
+    }
   }, [])
 
   const value = useMemo(() => ({
