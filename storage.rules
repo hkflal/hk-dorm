@@ -7,9 +7,11 @@ service firebase.storage {
 
     match /properties/{propertyId}/{fileName} {
       allow read: if true;
-      allow write: if isAdmin()
+      allow create, update: if isAdmin()
+        && request.resource != null
         && request.resource.size < 8 * 1024 * 1024
         && request.resource.contentType.matches('image/(jpeg|png|webp)');
+      allow delete: if isAdmin();
     }
   }
 }

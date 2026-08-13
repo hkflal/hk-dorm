@@ -12,6 +12,7 @@
     "firebase:deploy": "npm run export && npx firebase deploy",
     "firebase:init": "npx firebase init",
     "deploy:test": "node deploy-test.js",
+    "test:firebase-admin": "node scripts/run-firebase-admin-test.mjs",
     "migrate-data": "ts-node --esm scripts/migrate-data.ts",
     "upload-images": "node scripts/upload-images.js",
     "test:site": "npm run build && node scripts/verify-static-output.mjs"

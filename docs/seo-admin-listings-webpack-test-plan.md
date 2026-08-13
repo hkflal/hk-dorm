@@ -150,3 +150,79 @@ database created, sign in with an approved admin account and open
 
 This check is read-only and must not create the Firestore database or write any
 production document.
+
+## Live Firebase listing backend
+
+### Scope
+
+Move the admin listing source of truth from the static catalogue to the
+production Firestore `properties` collection, with Firebase Storage used for
+admin-uploaded images. The first production release must preserve the existing
+catalogue as a reviewed migration input, while later admin changes are made
+through the live dashboard.
+
+### Safety and release gates
+
+- Development and automated tests use the Firebase Auth, Firestore and Storage
+  Emulators only.
+- Before any production write, export the current Firestore state (including an
+  explicit empty-database result if no database exists) and save a versioned
+  migration input containing the current static catalogue.
+- Production setup is limited to creating the default Firestore database in
+  `asia-east2` (Hong Kong), deploying the reviewed Firestore/Storage rules and
+  indexes, and importing the reviewed catalogue once. Do not seed test rows.
+- The production smoke test is non-destructive: authenticate, read the migrated
+  rows, and verify the public active query. Hide/unhide and image upload are
+  proven in the emulators; no temporary production document is created.
+- If production read-back fails, stop before deploying the frontend or making
+  any additional write. Keep the static catalogue available as a read fallback.
+
+### Acceptance criteria
+
+- An authenticated approved admin can read every Firestore property, including
+  a database with zero property documents.
+- An empty but reachable Firestore database does not enter read-only mode;
+  `新增房源` remains enabled so the first listing can be created.
+- Admin create, edit, publish, unpublish, archive and permanent delete use
+  Firestore documents and write an immutable `auditLogs` record.
+- Unpublishing changes the document to a non-active status and removes it from
+  the anonymous public query. Republishing restores it to the public query.
+- If all properties are unpublished or archived, the public query returns zero
+  rows instead of silently restoring the static catalogue.
+- Admin image uploads accept JPG, PNG and WebP under 8MB, optimise them to a
+  bounded WebP payload, store them below `properties/{propertyId}/`, and save
+  the resulting download URL on the property document.
+- Firestore writes omit undefined optional fields and never fail merely because
+  an optional field was left blank in the form.
+- Firestore rules allow public reads only for active properties, approved-admin
+  writes only, and audit-log creation only for approved admins. Storage rules
+  allow public image reads and approved-admin image writes only within the
+  configured size/type limits.
+- A newly created listing appears in the public homepage after reload when it
+  is active and has an image. A pending or inactive listing never appears.
+- Production data is read back after migration and the count, property IDs,
+  status values and image URL fields match the reviewed migration manifest.
+
+### Emulator test command
+
+With no production Firebase variables loaded:
+
+```bash
+npm run test:firebase-admin
+```
+
+The script must start from an empty emulator database and verify, through the
+same Firebase service boundary used by the app:
+
+1. create a uniquely named property with blank optional fields;
+2. read it from the admin collection;
+3. upload one image and verify an accessible Storage URL;
+4. edit title, price and availability;
+5. publish it and verify an anonymous public read;
+6. hide it and verify it disappears from the anonymous public read;
+7. confirm the admin row remains editable and can be republished;
+8. delete it and verify both the property and audit trail;
+9. confirm a reachable empty collection still permits a subsequent create.
+
+The command must fail if it connects to a non-emulator project or if any
+temporary test document remains after cleanup.

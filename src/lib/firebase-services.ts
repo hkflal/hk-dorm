@@ -109,6 +109,8 @@ function asIso(value: unknown): string {
   if (value && typeof value === 'object' && 'toDate' in value && typeof value.toDate === 'function') {
     return value.toDate().toISOString()
   }
+  if (value instanceof Date) return value.toISOString()
+  if (typeof value === 'string' && value) return value
   return new Date().toISOString()
 }
 
@@ -120,6 +122,11 @@ type FirestorePropertyData = Partial<Omit<Property, 'id' | 'createdAt' | 'update
 function fromFirestore(snapshot: Awaited<ReturnType<typeof getDoc>>): Property {
   const data = (snapshot.data() || {}) as FirestorePropertyData
   const rawDetails: Partial<Property['details']> = data.details && typeof data.details === 'object' ? data.details : {}
+  const rawLocation: Partial<Property['location']> = data.location && typeof data.location === 'object' ? data.location : {}
+  const rawCoordinates: Partial<Property['location']['coordinates']> = rawLocation.coordinates && typeof rawLocation.coordinates === 'object' ? rawLocation.coordinates : {}
+  const rawAvailability: Partial<Property['availability']> = data.availability && typeof data.availability === 'object' ? data.availability : {}
+  const rawPolicies: Partial<Property['policies']> = data.policies && typeof data.policies === 'object' ? data.policies : {}
+  const rawHost: Partial<Property['host']> = data.host && typeof data.host === 'object' ? data.host : {}
   const rawPrice = Number(data.price)
   return {
     ...data,
@@ -130,23 +137,67 @@ function fromFirestore(snapshot: Awaited<ReturnType<typeof getDoc>>): Property {
     district: typeof data.district === 'string' ? data.district : '',
     price: Number.isFinite(rawPrice) ? rawPrice : 0,
     images: Array.isArray(data.images) ? data.images.filter((item): item is string => typeof item === 'string') : [],
+    imageAlts: Array.isArray(data.imageAlts) ? data.imageAlts.filter((item): item is string => typeof item === 'string') : [],
+    amenities: Array.isArray(data.amenities) ? data.amenities.filter((item): item is string => typeof item === 'string') : [],
+    location: {
+      ...rawLocation,
+      district: typeof rawLocation.district === 'string' ? rawLocation.district : (typeof data.district === 'string' ? data.district : ''),
+      address: typeof rawLocation.address === 'string' ? rawLocation.address : (typeof data.address === 'string' ? data.address : ''),
+      nearbyMTR: Array.isArray(rawLocation.nearbyMTR) ? rawLocation.nearbyMTR.filter((item): item is string => typeof item === 'string') : [],
+      coordinates: {
+        lat: Number.isFinite(Number(rawCoordinates.lat)) ? Number(rawCoordinates.lat) : 22.3193,
+        lng: Number.isFinite(Number(rawCoordinates.lng)) ? Number(rawCoordinates.lng) : 114.1694,
+      },
+    },
     details: {
       ...rawDetails,
       guests: Number.isFinite(Number(rawDetails.guests)) ? Number(rawDetails.guests) : 0,
+    },
+    host: {
+      id: typeof rawHost.id === 'string' ? rawHost.id : 'admin',
+      name: typeof rawHost.name === 'string' ? rawHost.name : 'Labour Dorm',
+      avatar: typeof rawHost.avatar === 'string' ? rawHost.avatar : '',
+      isSuperhost: rawHost.isSuperhost === true,
+      responseTime: typeof rawHost.responseTime === 'string' ? rawHost.responseTime : '',
+    },
+    availability: {
+      ...rawAvailability,
+      available: rawAvailability.available === true,
+      minStay: Number.isFinite(Number(rawAvailability.minStay)) ? Number(rawAvailability.minStay) : 30,
+      maxStay: Number.isFinite(Number(rawAvailability.maxStay)) ? Number(rawAvailability.maxStay) : 365,
+    },
+    policies: {
+      checkIn: typeof rawPolicies.checkIn === 'string' ? rawPolicies.checkIn : '',
+      checkOut: typeof rawPolicies.checkOut === 'string' ? rawPolicies.checkOut : '',
+      cancellation: typeof rawPolicies.cancellation === 'string' ? rawPolicies.cancellation : '',
     },
     createdAt: asIso(data.createdAt),
     updatedAt: asIso(data.updatedAt),
   } as Property
 }
 
+function omitUndefined<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.filter((item) => item !== undefined).map((item) => omitUndefined(item)) as T
+  }
+  if (value && typeof value === 'object' && !(value instanceof Date)) {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([, item]) => item !== undefined)
+        .map(([key, item]) => [key, omitUndefined(item)]),
+    ) as T
+  }
+  return value
+}
+
 function toFirestore(data: Partial<Property>) {
   const { id, createdAt, updatedAt, rating, reviewCount, host, ...safeData } = data
-  return { ...safeData, updatedAt: serverTimestamp() }
+  return { ...omitUndefined(safeData), updatedAt: serverTimestamp() }
 }
 
 async function writeAudit(action: string, propertyId: string, details: Record<string, unknown> = {}) {
   await addDoc(collection(db, 'auditLogs'), {
-    action, propertyId, details, createdAt: serverTimestamp(),
+    action, propertyId, details: omitUndefined(details), createdAt: serverTimestamp(),
   })
 }
 
@@ -167,10 +218,6 @@ export async function getAdminProperties(): Promise<Property[]> {
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('正式 Firestore 讀取逾時。')), adminReadTimeoutMs)),
     ])
     const properties = snapshot.docs.map((item) => fromFirestore(item))
-    if (properties.length === 0) {
-      adminBackendUnavailable = true
-      throw new Error('正式 Firestore 尚未建立房源資料。')
-    }
     adminBackendUnavailable = false
     return properties
   } catch (error) {
@@ -215,9 +262,7 @@ export async function getPublicProperties(): Promise<Property[]> {
         && property.images.length > 0
       ))
 
-    return remoteProperties.length > 0
-      ? remoteProperties
-      : [...staticPublicProperties]
+    return remoteProperties
   } catch {
     return [...staticPublicProperties]
   }
@@ -358,7 +403,10 @@ function blobToDataUrl(blob: Blob): Promise<string> {
 
 export async function deletePropertyImage(url: string): Promise<void> {
   if (url.startsWith('data:')) return
-  if (!url.includes('firebasestorage.googleapis.com')) return
+  const isFirebaseStorageUrl = url.includes('firebasestorage.googleapis.com')
+    || url.includes('127.0.0.1:9199')
+    || url.includes('localhost:9199')
+  if (!isFirebaseStorageUrl) return
   await deleteObject(ref(storage, url))
 }
 
