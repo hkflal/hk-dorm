@@ -1,6 +1,6 @@
 const endpoint = 'http://127.0.0.1:9099/emulator/v1/projects/labour-dorm-local/config'
 const accountsEndpoint = 'http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/projects/labour-dorm-local/accounts:batchGet'
-const adminEmail = 'arrivals@hkflal.com'
+const adminEmails = new Set(['arrivals@hkflal.com', 'hkdl902@gmail.com'])
 
 try {
   const response = await fetch(endpoint)
@@ -16,8 +16,8 @@ try {
   }
 
   const accounts = await accountsResponse.json()
-  if (!accounts.users?.some((user) => user.email === adminEmail)) {
-    throw new Error('The local admin account has not been created yet')
+  if (!accounts.users?.some((user) => adminEmails.has(user.email))) {
+    throw new Error('No approved local admin account has been created yet')
   }
 
   console.log('Firebase Auth Emulator and the local admin account are ready.')

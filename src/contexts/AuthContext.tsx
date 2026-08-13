@@ -36,17 +36,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
 
-  useEffect(() => onAuthStateChanged(auth, async (nextUser) => {
-    setUser(nextUser)
-    if (!nextUser) {
-      setIsAdmin(false)
-      setLoading(false)
-      return
-    }
-    const token = await nextUser.getIdTokenResult(true)
-    setIsAdmin(token.claims.admin === true || isAdminEmail(nextUser.email))
-    setLoading(false)
-  }), [])
+  useEffect(() => {
+    let requestId = 0
+    const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+      const currentRequestId = ++requestId
+      setUser(nextUser)
+      if (!nextUser) {
+        setIsAdmin(false)
+        setLoading(false)
+        return
+      }
+
+      void (async () => {
+        let hasAdminClaim = false
+        try {
+          const token = await nextUser.getIdTokenResult(true)
+          hasAdminClaim = token.claims.admin === true
+        } catch {
+          // Approved admin emails can still be resolved when a token refresh
+          // is temporarily unavailable. The next auth event retries claims.
+        }
+        if (currentRequestId !== requestId) return
+        setIsAdmin(hasAdminClaim || isAdminEmail(nextUser.email))
+        setLoading(false)
+      })()
+    })
+
+    return () => unsubscribe()
+  }, [])
 
   const value = useMemo(() => ({
     user,

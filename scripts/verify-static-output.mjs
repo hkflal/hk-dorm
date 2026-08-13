@@ -24,6 +24,9 @@ const javascriptBundle = javascriptFiles(resolve(output, '_next')).map((path) =>
 if (!javascriptBundle.includes('AW-11323045023/CKNSCKD65eoYEJ_pn5cq')) {
   throw new Error('Missing approved WhatsApp Google Ads conversion destination in the client bundle')
 }
+if (!javascriptBundle.includes('正式 Firestore 尚未啟用')) {
+  throw new Error('Missing production-without-Firestore read-only admin fallback')
+}
 
 const expectations = {
   en: {

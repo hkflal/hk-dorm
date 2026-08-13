@@ -13,6 +13,7 @@ import { Property } from './types'
 const propertiesCollection = collection(db, 'properties')
 const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp']
 const maxImageBytes = 8 * 1024 * 1024
+const adminReadTimeoutMs = 6000
 const staticPublicProperties = enhancedProperties.filter(isIndexableProperty)
 const firebaseConfigured = Boolean(
   process.env.NEXT_PUBLIC_FIREBASE_API_KEY
@@ -36,10 +37,12 @@ export const adminDataMode: 'firebase' | 'local' | 'readonly' = firebaseConfigur
     ? 'local'
     : 'readonly'
 export const adminWritesAvailable = adminDataMode !== 'readonly'
+export const adminReadOnlyNotice = '正式 Firestore 尚未啟用，目前顯示網站房源供檢視；新增、編輯、發布、下架及刪除暫時停用。'
+let adminBackendUnavailable = false
 
 function requireAdminWrites() {
-  if (!adminWritesAvailable) {
-    throw new Error('本地 Firestore 測試資料庫尚未啟動，現有房源目前只供檢視。')
+  if (!adminWritesAvailable || adminBackendUnavailable) {
+    throw new Error(adminBackendUnavailable ? adminReadOnlyNotice : '本地 Firestore 測試資料庫尚未啟動，現有房源目前只供檢視。')
   }
 }
 
@@ -109,11 +112,28 @@ function asIso(value: unknown): string {
   return new Date().toISOString()
 }
 
+type FirestorePropertyData = Partial<Omit<Property, 'id' | 'createdAt' | 'updatedAt'>> & {
+  createdAt?: unknown
+  updatedAt?: unknown
+}
+
 function fromFirestore(snapshot: Awaited<ReturnType<typeof getDoc>>): Property {
-  const data = snapshot.data() as Omit<Property, 'id' | 'createdAt' | 'updatedAt'> & { createdAt?: unknown; updatedAt?: unknown }
+  const data = (snapshot.data() || {}) as FirestorePropertyData
+  const rawDetails: Partial<Property['details']> = data.details && typeof data.details === 'object' ? data.details : {}
+  const rawPrice = Number(data.price)
   return {
     ...data,
     id: snapshot.id,
+    property_id: typeof data.property_id === 'string' && data.property_id.trim() ? data.property_id : snapshot.id,
+    title: typeof data.title === 'string' && data.title.trim() ? data.title : '未命名房源',
+    address: typeof data.address === 'string' ? data.address : '',
+    district: typeof data.district === 'string' ? data.district : '',
+    price: Number.isFinite(rawPrice) ? rawPrice : 0,
+    images: Array.isArray(data.images) ? data.images.filter((item): item is string => typeof item === 'string') : [],
+    details: {
+      ...rawDetails,
+      guests: Number.isFinite(Number(rawDetails.guests)) ? Number(rawDetails.guests) : 0,
+    },
     createdAt: asIso(data.createdAt),
     updatedAt: asIso(data.updatedAt),
   } as Property
@@ -132,23 +152,35 @@ async function writeAudit(action: string, propertyId: string, details: Record<st
 
 export async function getAdminProperties(): Promise<Property[]> {
   if (localAdminStoreEnabled) {
+    adminBackendUnavailable = false
     return await readLocalAdminProperties()
   }
 
   if (adminDataMode === 'readonly') {
+    adminBackendUnavailable = false
     return [...enhancedProperties]
   }
 
   try {
-    const snapshot = await getDocs(query(propertiesCollection, orderBy('updatedAt', 'desc')))
+    const snapshot = await Promise.race([
+      getDocs(query(propertiesCollection, orderBy('updatedAt', 'desc'))),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('正式 Firestore 讀取逾時。')), adminReadTimeoutMs)),
+    ])
     const properties = snapshot.docs.map((item) => fromFirestore(item))
-    return properties.length > 0 || firebaseConfigured
-      ? properties
-      : [...enhancedProperties]
+    if (properties.length === 0) {
+      adminBackendUnavailable = true
+      throw new Error('正式 Firestore 尚未建立房源資料。')
+    }
+    adminBackendUnavailable = false
+    return properties
   } catch (error) {
-    if (firestoreEmulatorEnabled) return [...enhancedProperties]
+    adminBackendUnavailable = true
     throw error
   }
+}
+
+export function getAdminFallbackProperties(): Property[] {
+  return [...enhancedProperties]
 }
 
 /**

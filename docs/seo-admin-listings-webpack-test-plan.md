@@ -32,6 +32,12 @@
 
 - `/zh-hk/admin/` shows the existing local property catalogue when Firestore is
   unavailable.
+- If the production Firebase project has no Firestore database yet, the admin
+  page remains renderable after authentication, shows the static catalogue in
+  read-only mode, and clearly explains why writes are disabled.
+- If an authenticated user's token refresh fails temporarily, an approved
+  admin email can still resolve to admin access; the page must not crash from
+  an uncaught `getIdTokenResult()` rejection.
 - The dashboard no longer reports zero simply because a local Firestore
   emulator is not running.
 - No Firestore connection error is logged during the fallback read.
@@ -124,3 +130,21 @@ With localhost and the local Auth Emulator running:
    reload `/zh-hk/` and confirm the result is zero listings; republish one
    from the default admin view and confirm it returns after reload.
 7. Check the browser console for errors and record the result.
+
+### Production-without-Firestore regression
+
+With Firebase client configuration enabled but no `(default)` Firestore
+database created, sign in with an approved admin account and open
+`/zh-hk/admin/`. Confirm:
+
+1. The route does not show Next.js `Application error`.
+2. The existing static catalogue is visible.
+3. The page identifies the missing production database and disables add, edit,
+   publish, archive, and delete controls.
+4. A browser refresh remains stable and does not produce an uncaught client
+   exception.
+5. A missing or unreachable database leaves the loading state within the
+   configured read timeout and does not remain stuck indefinitely.
+
+This check is read-only and must not create the Firestore database or write any
+production document.

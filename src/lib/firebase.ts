@@ -55,7 +55,8 @@ if (emulatorState && useStorageEmulator && !emulatorState.__labourDormEmulators?
 
 // Initialize Analytics (only on client side)
 let analytics: Analytics | undefined;
-if (typeof window !== 'undefined' && firebaseConfig.measurementId) {
+const usingAnyEmulator = useAuthEmulator || useFirestoreEmulator || useStorageEmulator
+if (typeof window !== 'undefined' && firebaseConfig.measurementId && !usingAnyEmulator) {
   analytics = getAnalytics(app);
 }
 
