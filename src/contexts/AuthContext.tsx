@@ -12,7 +12,7 @@ import {
 import { FirebaseError } from 'firebase/app'
 import { auth } from '@/lib/firebase'
 
-const adminEmail = 'arrivals@hkflal.com'
+const adminEmails = new Set(['arrivals@hkflal.com', 'hkdl902@gmail.com'])
 const usingFirebaseEmulators = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === 'true'
   || process.env.NEXT_PUBLIC_USE_FIREBASE_AUTH_EMULATOR === 'true'
 
@@ -27,6 +27,10 @@ type AuthState = {
 
 const AuthContext = createContext<AuthState | undefined>(undefined)
 
+function isAdminEmail(email: string | null | undefined) {
+  return Boolean(email && adminEmails.has(email.trim().toLowerCase()))
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -40,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
     const token = await nextUser.getIdTokenResult(true)
-    setIsAdmin(token.claims.admin === true || nextUser.email === adminEmail)
+    setIsAdmin(token.claims.admin === true || isAdminEmail(nextUser.email))
     setLoading(false)
   }), [])
 
@@ -54,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await signInWithEmailAndPassword(auth, normalizedEmail, password)
       } catch (error) {
         const mayCreateLocalAdmin = usingFirebaseEmulators
-          && normalizedEmail === adminEmail
+          && isAdminEmail(normalizedEmail)
           && error instanceof FirebaseError
           && ['auth/user-not-found', 'auth/invalid-credential'].includes(error.code)
 

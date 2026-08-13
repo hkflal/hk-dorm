@@ -11,8 +11,8 @@ the production Firebase project.
 - Never store the administrator password in source control, scripts, fixtures,
   exported emulator data, or documentation.
 - Automatic test-user creation is allowed only when
-  `NEXT_PUBLIC_USE_FIREBASE_EMULATORS=true` and only for
-  `arrivals@hkflal.com`.
+  `NEXT_PUBLIC_USE_FIREBASE_EMULATORS=true` and only for the approved admin
+  emails `arrivals@hkflal.com` and `hkdl902@gmail.com`.
 - Production Firebase configuration and production data must remain untouched.
 - Firestore and Storage operations remain unavailable until their emulators are
   running; do not fall back to production services.
@@ -21,8 +21,8 @@ the production Firebase project.
 
 1. Local development reports a clear configuration error when the emulator flag
    is missing.
-2. With the Auth Emulator running, the approved admin email can sign in with the
-   password entered in the form.
+2. With the Auth Emulator running, either approved admin email can sign in with
+   the password entered in the form.
 3. If the approved emulator user does not exist, the first sign-in creates that
    emulator-only user and continues to `/zh-hk/admin/`.
 4. An unapproved email is never auto-created and receives a useful error.
